@@ -101,13 +101,13 @@
 // export default router;
 
 
-import express from "express";
+import express, { response } from "express";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
 import Tutorial from "../models/tutorialsModel.js";
 import Company from "../models/CompanyModel.js";
 import Department from "../models/departmentModel.js";
-
+import {Readable} from 'node:stream';
 const router = express.Router();
 
 // Configure multer for memory storage (file will be uploaded to Cloudinary in the handler)
@@ -611,7 +611,8 @@ router.get('/preview/:id', async (req, res) => {
     }
 
     const contentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Type', "application/pdf");
+    // res.setHeader('Content-Type', contentType);
     const contentLength = upstreamRes.headers.get('content-length');
     if (contentLength) res.setHeader('Content-Length', contentLength);
 
@@ -625,7 +626,8 @@ router.get('/preview/:id', async (req, res) => {
     }
 
     // Stream upstream response to client
-    upstreamRes.body.pipe(res);
+    // upstreamRes.body.pipe(res);
+    Readable.fromWeb(upstreamRes.body).pipe(res);
   } catch (err) {
     console.error('Preview fetch error:', err);
     res.status(500).json({ success: false, message: 'Server error fetching preview', error: err.message });
