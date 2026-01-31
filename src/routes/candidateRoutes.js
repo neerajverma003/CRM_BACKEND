@@ -22,7 +22,7 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Routes
 
-// GET /candidates - Get all candidates for a user
+// GET /candidates - Get all candidates (optionally filter by createdBy)
 router.get("/", getCandidates);
 
 // GET /candidates/:id - Get a single candidate by ID

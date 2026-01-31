@@ -87,17 +87,13 @@ const getCandidates = async (req, res) => {
   try {
     const { createdBy } = req.query;
 
-    if (!createdBy) {
-      return res.status(400).json({
-        success: false,
-        message: 'CreatedBy parameter is required'
-      });
+    let query = { isActive: true };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
     }
 
-    const candidates = await Candidate.find({
-      createdBy,
-      isActive: true
-    }).populate('profile', 'name').sort({ createdAt: -1 });
+    const candidates = await Candidate.find(query).populate('profile', 'name').sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -226,7 +222,7 @@ const deleteCandidate = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const candidate = await Candidate.findById(id);
+    const candidate = await Candidate.findOne({ _id: id, isActive: true });
 
     if (!candidate) {
       return res.status(404).json({
@@ -264,7 +260,7 @@ const deleteCandidate = async (req, res) => {
       error: error.message
     });
   }
-};
+};;
 
 export {
   createCandidate,

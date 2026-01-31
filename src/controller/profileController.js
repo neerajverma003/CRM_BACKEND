@@ -50,22 +50,20 @@ export const createProfile = async (req, res) => {
   }
 };
 
-// Get all profiles for the current user
+// Get all profiles (optionally filter by createdBy)
 export const getAllProfiles = async (req, res) => {
   try {
-    const createdBy = req.userInfo?.id || req.query.createdBy;
+    const createdBy = req.query.createdBy; // Only use query param, not req.userInfo
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    if (!createdBy) {
-      return res.status(400).json({
-        success: false,
-        message: "User ID is required"
-      });
+    let query = { isActive: true };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
     }
 
-    const query = { createdBy, isActive: true };
     const total = await Profile.countDocuments(query);
 
     const profiles = await Profile.find(query)
@@ -189,10 +187,9 @@ export const updateProfile = async (req, res) => {
 export const deleteProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const createdBy = req.userInfo?.id;
 
     const deletedProfile = await Profile.findOneAndUpdate(
-      { _id: id, createdBy, isActive: true },
+      { _id: id, isActive: true },
       { isActive: false },
       { new: true }
     );
