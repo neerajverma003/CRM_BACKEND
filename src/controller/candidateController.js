@@ -1,5 +1,5 @@
 import Candidate from '../models/candidateModel.js';
-import Profile from '../models/profileModel.js';
+import Profile from '../models/ProfileModel.js';
 import path from 'path';
 import fs from 'fs';
 

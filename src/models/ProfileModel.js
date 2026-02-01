@@ -25,6 +25,6 @@ const profileSchema = new mongoose.Schema(
 // Index for better query performance
 profileSchema.index({ createdBy: 1, createdAt: -1 });
 
-const Profile = mongoose.model("Profile", profileSchema);
+const Profile = mongoose.models.Profile || mongoose.model("Profile", profileSchema);
 
 export default Profile;

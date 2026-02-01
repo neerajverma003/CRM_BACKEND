@@ -1,4 +1,4 @@
-import Profile from "../models/profileModel.js";
+import Profile from "../models/ProfileModel.js";
 import Admin from "../models/Adminmodel.js";
 
 // Create a new profile

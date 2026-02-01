@@ -30,7 +30,7 @@ router.get("/:id", getCandidateById);
 
 // POST /candidates - Create a new candidate
 // Middleware to set profileName and candidateName in req.body for Cloudinary folder structure
-import Profile from "../models/profileModel.js";
+import Profile from "../models/ProfileModel.js";
 router.post("/", async (req, res, next) => {
   // Multer parses form-data after this middleware, so we use req.body only for urlencoded/json, not file uploads
   // Instead, use a custom field in the form for profileName and candidateName, or fetch profile name here
