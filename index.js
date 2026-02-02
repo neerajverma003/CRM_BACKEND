@@ -201,6 +201,7 @@ import invoiceRoutes from "./src/routes/invoiceRoutes.js"
 import salaryRoutes from "./src/routes/salaryRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
 import candidateRoutes from "./src/routes/candidateRoutes.js";
+import employeeRoleRoutes from "./src/routes/employeeRoleRoutes.js";
 import cloudinary from "./config/cloudinary.js";
 connectDB(); //  Connect to MongoDB
 
@@ -243,6 +244,7 @@ app.use("/invoice", invoiceRoutes);
 app.use("/salary", salaryRoutes);
 app.use("/profiles", profileRoutes);
 app.use("/candidates", candidateRoutes);
+app.use("/employeerole", employeeRoleRoutes);
 
 // Global error handler for uncaught errors
 app.use((err, req, res, next) => {

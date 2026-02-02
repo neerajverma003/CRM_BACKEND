@@ -107,7 +107,7 @@ import cloudinary from "../../config/cloudinary.js";
 import Tutorial from "../models/tutorialsModel.js";
 import Company from "../models/CompanyModel.js";
 import Department from "../models/departmentModel.js";
-import {Readable} from 'node:stream';
+import { Readable } from 'node:stream';
 const router = express.Router();
 
 // Configure multer for memory storage (file will be uploaded to Cloudinary in the handler)
@@ -295,7 +295,7 @@ router.post("/", (req, res, next) => {
           console.log('[Tutorial Upload] Retry upload result:', { public_id: retry.public_id, secure_url: retry.secure_url, resource_type: retry.resource_type, bytes: retry.bytes });
         } else {
           // For non-PDFs we could also retry with uploader.upload (optional)
-          const retry = await cloudinary.uploader.upload_stream({ folder: folderPath, resource_type: resourceType }, () => {});
+          const retry = await cloudinary.uploader.upload_stream({ folder: folderPath, resource_type: resourceType }, () => { });
           // no-op; skipping detailed retry for non-pdfs for now
         }
       } catch (retryErr) {

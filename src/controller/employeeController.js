@@ -688,6 +688,7 @@ import Leave from "../models/LeaveModel.js";
 import Company from "../models/CompanyModel.js"
 import Designation from "../models/designationModel.js";
 import SubRole from "../models/subRoleModel.js";
+import EmployeeRole from "../models/employeeRoleModel.js";
 
 
 
@@ -1081,14 +1082,14 @@ export const getAssignedRoles = async (req, res) => {
 
     const assignedRoles = assigned.assignedRoles || [];
 
-    // Enrich assignedRoles with role names and subRole names for frontend
+    // Enrich assignedRoles with role names, canonical subRole names+points, and assigned points for frontend
     const enriched = await Promise.all(
       assignedRoles.map(async (ar) => {
-        // 1️⃣ Fetch role names from roleId array
+        // 1️⃣ Fetch role names from roleId array (search in EmployeeRole collection)
         let roleNames = [];
         try {
           if (Array.isArray(ar.roleId) && ar.roleId.length) {
-            const rolesDocs = await Role.find({ _id: { $in: ar.roleId } }).select("role").lean();
+            const rolesDocs = await EmployeeRole.find({ _id: { $in: ar.roleId } }).select("role").lean();
             roleNames = rolesDocs.map((d) => d.role);
           }
         } catch (e) {
@@ -1096,38 +1097,36 @@ export const getAssignedRoles = async (req, res) => {
           roleNames = [];
         }
 
-        // 2️⃣ Fetch subRole names directly from SubRole collection
+        // 2️⃣ Fetch canonical subRole documents (to get subRoleName and their canonical points)
         let subRoles = [];
         try {
           if (Array.isArray(ar.subRoles) && ar.subRoles.length) {
-            // Fetch SubRole documents directly using the subRole IDs
             const subRoleDocs = await SubRole.find({ _id: { $in: ar.subRoles } }).lean();
-            
-            // Create a map for easy lookup
+
+            // Build map id -> { subRoleName, points }
             const map = {};
             subRoleDocs.forEach(sr => {
-              map[sr._id.toString()] = sr.subRoleName;
+              map[sr._id.toString()] = { subRoleName: sr.subRoleName, points: sr.points || [] };
             });
 
-            // Map subRole IDs to their names
-            subRoles = ar.subRoles.map((id) => ({
-              _id: id,
-              subRoleName: map[id.toString()] || "Unknown Sub-role",
-            }));
+            // Attach canonical points to each subRole
+            subRoles = ar.subRoles.map((id) => {
+              const key = id.toString();
+              const info = map[key] || { subRoleName: "Unknown Sub-role", points: [] };
+              return { _id: id, subRoleName: info.subRoleName, points: info.points };
+            });
           }
         } catch (e) {
-          console.error("Error fetching subRole names:", e);
-          subRoles = (ar.subRoles || []).map((id) => ({
-            _id: id,
-            subRoleName: "Unknown Sub-role",
-          }));
+          console.error("Error fetching subRole docs:", e);
+          subRoles = (ar.subRoles || []).map((id) => ({ _id: id, subRoleName: "Unknown Sub-role", points: [] }));
         }
 
-        // 3️⃣ Return enriched data with both role names and subRole names
+        // 3️⃣ Build the final object: include assigned points at role-level (ar.points)
         return {
           ...ar,
-          roleNames,  // Array of role names
-          subRoles,   // Array of { _id, subRoleName }
+          roleNames,
+          subRoles,
+          points: ar.points || [], // assigned points for this role assignment
         };
       })
     );
@@ -1171,91 +1170,82 @@ export const assignWorkRole = async (req, res) => {
   try {
     const { employeeId, companyIds, workRoles, subRoles = [], points = [] } = req.body;
 
-    // 1️⃣ Validation
     if (!employeeId || !companyIds?.length || !workRoles?.length) {
       return res.status(400).json({
         success: false,
-        message: "Employee, company, and at least one role are required",
+        message: "employeeId, companyIds (array) and workRoles are required",
       });
     }
 
-    // 2️⃣ Fetch employee
     const employee = await Employee.findById(employeeId);
-    if (!employee) {
-      return res.status(404).json({
-        success: false,
-        message: "Employee not found",
-      });
-    }
+    if (!employee) return res.status(404).json({ success: false, message: "Employee not found" });
 
-    // 3️⃣ Convert all IDs to ObjectId
+    // Normalize company IDs to ObjectId
     const companyObjectIds = companyIds.map(c => new Types.ObjectId(c));
-    const workRoleObjectIds = workRoles.map(r => new Types.ObjectId(r));
-    const subRoleObjectIds = subRoles.map(s => new Types.ObjectId(s));
 
-    // 4️⃣ Check if assignment exists for these roles & companies
-    const existingIndex = employee.assignedRoles.findIndex((ar) => {
-      // Check if ALL roles match
-      const roleMatch = workRoleObjectIds.every(r =>
-        ar.roleId.some(rid => rid.toString() === r.toString())
-      );
-      // Check if ANY company matches
-      const companyMatch = ar.companyIds.some(c =>
-        companyObjectIds.includes(c.toString())
-      );
-      return roleMatch && companyMatch;
-    });
+    // Support both role names and role _id values from frontend
+    // Search in EmployeeRole collection (for employee-specific roles)
+    const isIdArray = Array.isArray(workRoles) && workRoles.every(w => mongoose.Types.ObjectId.isValid(w));
+    const roleDocs = isIdArray
+      ? await EmployeeRole.find({ _id: { $in: workRoles } })
+      : await EmployeeRole.find({ role: { $in: workRoles } });
 
-    if (existingIndex !== -1) {
-      // 🔹 MERGE: Update existing assignment
-      // Merge sub-roles (avoid duplicates)
-      const existingSubRoles = employee.assignedRoles[existingIndex].subRoles.map(s => s.toString());
-      const newSubRoles = subRoleObjectIds.filter(s => !existingSubRoles.includes(s.toString()));
-      
-      if (newSubRoles.length > 0) {
-        employee.assignedRoles[existingIndex].subRoles.push(...newSubRoles);
-      }
+    if (!roleDocs.length) return res.status(404).json({ success: false, message: "No valid employee roles found" });
 
-      // Merge points (avoid duplicates)
-      const existingPoints = employee.assignedRoles[existingIndex].points || [];
-      const newPoints = points.filter(p => !existingPoints.includes(p));
-      
-      if (newPoints.length > 0) {
-        employee.assignedRoles[existingIndex].points = [...existingPoints, ...newPoints];
-      }
+    // For each role, create or merge an assignedRoles entry (mirror admin logic)
+    for (const roleDoc of roleDocs) {
+      // Allowed subRole ids for this role
+      const allowedSubRoleIds = (roleDoc.subRole || []).map(s => s.toString());
 
-      // Merge companies (avoid duplicates)
-      const existingCompanyIds = employee.assignedRoles[existingIndex].companyIds.map(c => c.toString());
-      const newCompanyIds = companyObjectIds.filter(c => !existingCompanyIds.includes(c.toString()));
-      
-      if (newCompanyIds.length > 0) {
-        employee.assignedRoles[existingIndex].companyIds.push(...newCompanyIds);
-      }
-    } else {
-      // 5️⃣ Create new assignedRole if it doesn't exist
-      employee.assignedRoles.push({
-        roleId: workRoleObjectIds,
-        companyIds: companyObjectIds,
-        subRoles: subRoleObjectIds,
-        points: Array.from(new Set(points)), // remove duplicate points
+      // Keep only subRoles that belong to this role
+      const filteredSubRoles = (subRoles || []).filter(sr => allowedSubRoleIds.includes(sr.toString()));
+
+      // Find existing assignment for this role and overlapping companies
+      const existingIndex = employee.assignedRoles.findIndex(existing => {
+        const existingRoleIds = Array.isArray(existing.roleId)
+          ? existing.roleId.map(r => r.toString())
+          : [String(existing.roleId)];
+
+        const roleMatch = existingRoleIds.includes(roleDoc._id.toString());
+        const companyMatch = Array.isArray(existing.companyIds) && existing.companyIds.some(c =>
+          companyObjectIds.some(co => co.toString() === c.toString())
+        );
+
+        return roleMatch && companyMatch;
       });
+
+      if (existingIndex !== -1) {
+        // Merge subRoles
+        const existingSubRoles = (employee.assignedRoles[existingIndex].subRoles || []).map(s => s.toString());
+        const toAddSub = filteredSubRoles.filter(s => !existingSubRoles.includes(s.toString()));
+        if (toAddSub.length) employee.assignedRoles[existingIndex].subRoles.push(...toAddSub.map(s => new Types.ObjectId(s)));
+
+        // Merge points
+        const existingPoints = employee.assignedRoles[existingIndex].points || [];
+        const newPoints = points.filter(p => !existingPoints.includes(p));
+        if (newPoints.length) employee.assignedRoles[existingIndex].points = [...existingPoints, ...newPoints];
+
+        // Merge companies
+        const existingCompanyIds = (employee.assignedRoles[existingIndex].companyIds || []).map(c => c.toString());
+        const newCompanyIds = companyObjectIds.filter(c => !existingCompanyIds.includes(c.toString()));
+        if (newCompanyIds.length) employee.assignedRoles[existingIndex].companyIds.push(...newCompanyIds);
+      } else {
+        // Create new assignment entry for this specific role
+        employee.assignedRoles.push({
+          roleId: [roleDoc._id],
+          companyIds: companyObjectIds,
+          subRoles: filteredSubRoles.map(s => new Types.ObjectId(s)),
+          points: Array.from(new Set(points || [])),
+        });
+      }
     }
 
     await employee.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Roles, subRoles, and points assigned successfully",
-      data: employee,
-    });
-
+    return res.status(200).json({ success: true, message: "Roles assigned successfully", assignedRoles: employee.assignedRoles });
   } catch (error) {
-    console.error(" Error in assignWorkRole:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: error.message,
-    });
+    console.error("Error in employee assignWorkRole:", error);
+    return res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
 
