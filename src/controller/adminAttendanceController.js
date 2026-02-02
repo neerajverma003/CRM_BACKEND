@@ -964,7 +964,11 @@ export const editAdminAttendance = async (req, res) => {
     const today = new Date();
     const toDateTime = (timeStr) => {
       if (!timeStr) return null;
-      // Create a date object using today's date + provided time (like "10:00")
+      // If it's an ISO date string, parse it directly
+      if (timeStr.includes('T') || timeStr.includes('-')) {
+        return new Date(timeStr);
+      }
+      // Otherwise, treat as "HH:MM" format
       const [hours, minutes] = timeStr.split(":").map(Number);
       const d = new Date(today);
       d.setHours(hours, minutes, 0, 0);
