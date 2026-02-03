@@ -170,6 +170,7 @@ import companyRoutes from "./src/routes/companyRoutes.js"; //  Add .js extension
 import employeeRoutes from "./src/routes/employeeRoutes.js"; //  Add .js extension
 import attendanceRoute from "./src/routes/attendanceRoute.js"; //  Add .js extension
 import SuperAdminRoutes from "./src/routes/SuperAdminRoutes.js"; //  Add .js extension
+import superadminMyleadRoutes from "./src/routes/superadminMyleadRoutes.js";
 import loginRoutes from "./src/routes/loginRoutes.js"
 import leadRoutes from "./src/routes/leadRoutes.js"
 import chequeRoutes from "./src/routes/chequeRoutes.js"
@@ -220,6 +221,7 @@ app.use("/leads", leadRoutes);
 app.use("/employee", employeeRoutes);
 app.use("/attendance", attendanceRoute);
 app.use('/AddSuperAdmin', SuperAdminRoutes);
+app.use('/superadminmylead', superadminMyleadRoutes);
 app.use("/cheque", chequeRoutes)
 app.use('/login' , loginRoutes)
 app.use('/expense',expenseRoutes)
