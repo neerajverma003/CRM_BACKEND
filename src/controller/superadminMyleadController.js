@@ -35,7 +35,7 @@ export const getAllSuperadminMyleads = async (req, res) => {
 
     const leads = await SuperadminMylead
       .find(filter)
-      .select("name email phone whatsAppNo destination leadStatus leadSource createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
+      .select("name email phone whatsAppNo destination leadStatus leadSource createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate assignedEmployee leadInterestStatus")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -170,6 +170,42 @@ export const getSuperadminMyleadStats = async (req, res) => {
     };
 
     res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Assign lead to employee (superadmin only)
+export const assignLeadToEmployee = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const { employeeId } = req.body;
+
+    const lead = await SuperadminMylead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+
+    lead.assignedEmployee = employeeId;
+    lead.updatedAt = Date.now();
+    await lead.save();
+
+    res.status(200).json({ success: true, message: 'Lead assigned to employee successfully', data: lead });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get leads assigned to a specific employee
+export const getLeadsAssignedToEmployee = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    const leads = await SuperadminMylead.find({ assignedEmployee: employeeId })
+      .populate('superAdminId', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: leads });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

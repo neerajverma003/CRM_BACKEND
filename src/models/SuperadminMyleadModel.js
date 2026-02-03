@@ -66,6 +66,11 @@ const superadminMyleadSchema = new mongoose.Schema({
     enum: ["", "Interested", "Not Interested", "Connected", "Not Connected", "Follow Up"],
     default: ""
   }, // Track lead interest status
+  assignedEmployee: {
+    type: Schema.Types.ObjectId,
+    ref: 'Employee',
+    default: null
+  }, // Employee assigned by superadmin
   groupNumber: {
     type: String,
   },
@@ -92,6 +97,7 @@ superadminMyleadSchema.index({ superAdminId: 1 });
 superadminMyleadSchema.index({ createdAt: -1 });
 superadminMyleadSchema.index({ leadStatus: 1 });
 superadminMyleadSchema.index({ destination: 1 });
+superadminMyleadSchema.index({ assignedEmployee: 1 });
 superadminMyleadSchema.index({ name: "text", email: "text", phone: "text" });
 superadminMyleadSchema.index({ email: 1 }, { sparse: true });
 superadminMyleadSchema.index({ phone: 1 }, { sparse: true });

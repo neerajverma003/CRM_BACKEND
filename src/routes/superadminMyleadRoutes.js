@@ -7,7 +7,9 @@ import {
   deleteSuperadminMylead,
   bulkDeleteSuperadminMyleads,
   getSuperadminMyleadsByStatus,
-  getSuperadminMyleadStats
+  getSuperadminMyleadStats,
+  assignLeadToEmployee,
+  getLeadsAssignedToEmployee
 } from "../controller/superadminMyleadController.js";
 
 const router = express.Router();
@@ -16,9 +18,11 @@ const router = express.Router();
 router.get("/:superAdminId", getAllSuperadminMyleads);
 router.get("/:superAdminId/status/:status", getSuperadminMyleadsByStatus);
 router.get("/stats/:superAdminId", getSuperadminMyleadStats);
+router.get("/assigned-to/:employeeId", getLeadsAssignedToEmployee);
 router.get("/lead/:id", getSuperadminMyleadById);
 router.post("/:superAdminId", createSuperadminMylead);
 router.put("/:id", updateSuperadminMylead);
+router.put("/assign/:leadId", assignLeadToEmployee);
 router.delete("/:id", deleteSuperadminMylead);
 router.post("/bulk-delete", bulkDeleteSuperadminMyleads);
 
