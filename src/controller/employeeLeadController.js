@@ -3,6 +3,7 @@ import Employee from "../models/employeeModel.js";
 import OperationLead from "../models/operationLeadModel.js";
 import CustomerCreation from "../models/customerCreation.js";
 import { cloudinary } from "../../config/upload.js";
+import SuperadminMyleadModel from "../models/SuperadminMyleadModel.js";
 
 export const createLead = async (req, res) => {
   try {
@@ -238,17 +239,22 @@ export const addMessage = async (req, res) => {
   try {
     const { leadId } = req.params;
     const { message, sentAt, sender } = req.body;
-
+    
     if (!leadId) return res.status(400).json({ success: false, message: 'leadId is required' });
     if (!message || !message.trim()) return res.status(400).json({ success: false, message: 'message is required' });
 
     const msg = { text: message.trim(), sentAt: sentAt ? new Date(sentAt) : new Date(), sender: sender || null };
+    console.log(msg);
+    console.log(leadId);
 
-    const updatedLead = await EmployeeLead.findByIdAndUpdate(
+    // const updatedLead = await EmployeeLead.findByIdAndUpdate(
+    const updatedLead = await SuperadminMyleadModel.findByIdAndUpdate(
       leadId,
       { $push: { messages: msg } },
       { new: true }
     );
+    console.log(updatedLead);
+    
 
     if (!updatedLead) return res.status(404).json({ success: false, message: 'Lead not found' });
 
