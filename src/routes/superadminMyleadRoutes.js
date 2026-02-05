@@ -12,7 +12,9 @@ import {
   getLeadsAssignedToEmployee,
   getMessages,
   addMessage,
-  saveDetails
+  saveDetails,
+  transferLeadToOperation,
+  getTransferLeadsByAdmin
 } from "../controller/superadminMyleadController.js";
 
 const router = express.Router();
@@ -31,6 +33,10 @@ router.post("/bulk-delete", bulkDeleteSuperadminMyleads);
 router.get("/:leadId/messages", getMessages); 
 router.post("/:leadId/messages", addMessage); 
 router.post("/:leadId/details", saveDetails);
+// router.get("/transfer/:leadId", getOperationLeadById);
+router.post("/transfer/:leadId", transferLeadToOperation);
+router.get("/transfer/admin", getTransferLeadsByAdmin);
+
 
 
 export default router;

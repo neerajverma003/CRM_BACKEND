@@ -3,6 +3,9 @@ import SuperAdmin from "../models/SuperAdminModel.js";
 import SuperadminMyleadModel from "../models/SuperadminMyleadModel.js";
 import Employee from "../models/employeeModel.js";
 import EmployeeLead from "../models/employeeLeadModel.js";
+import OperationLead from "../models/operationLeadModel.js";
+import Adminmodel from "../models/Adminmodel.js";
+import superAdmin from "../models/SuperAdminModel.js";
 
 // Get all myleads for a superadmin
 // export const getAllSuperadminMyleads = async (req, res) => {
@@ -37,7 +40,7 @@ import EmployeeLead from "../models/employeeLeadModel.js";
 //     const totalCount = await SuperadminMylead.countDocuments(filter);
 //     console.log(filter);
 //     console.log(superAdminId); 
-    
+
 //     const leads = await SuperadminMyleadModel 
 //       .findById(superAdminId )
 //       .select("name email phone whatsAppNo destination leadStatus leadSource createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate assignedEmployee leadInterestStatus")
@@ -46,7 +49,7 @@ import EmployeeLead from "../models/employeeLeadModel.js";
 //       .limit(limit)
 //       .lean();
 //     console.log("Fetched leads:", leads);
-    
+
 //     const totalPages = Math.ceil(totalCount / limit);
 
 //     res.status(200).json({
@@ -314,7 +317,7 @@ export const addMessage = async (req, res) => {
   try {
     const { leadId } = req.params;
     const { message, sentAt, sender } = req.body;
-    
+
     if (!leadId) return res.status(400).json({ success: false, message: 'leadId is required' });
     if (!message || !message.trim()) return res.status(400).json({ success: false, message: 'message is required' });
 
@@ -329,7 +332,7 @@ export const addMessage = async (req, res) => {
       { new: true }
     );
     console.log(updatedLead);
-    
+
 
     if (!updatedLead) return res.status(404).json({ success: false, message: 'Lead not found' });
 
@@ -380,7 +383,7 @@ export const saveDetails = async (req, res) => {
       { new: true }
     );
     console.log(lead);
-    
+
 
     if (!lead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
@@ -389,6 +392,81 @@ export const saveDetails = async (req, res) => {
     return res.status(200).json({ success: true, message: "Details saved successfully", lead });
   } catch (error) {
     console.error("Error saving lead details:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const transferLeadToOperation = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    if (!leadId) return res.status(400).json({ success: false, message: "leadId is required" });
+
+    const lead = await SuperadminMyleadModel.findById(leadId);
+    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+
+    const adminId=await superAdmin.find({_id:"690459d3fcb771c7776a25fe"});
+    console.log("Admin ID:", adminId[0]._id);
+    
+    // Create a new OperationLead document
+    const op = await OperationLead.create({
+      originalLeadId: lead._id,
+      employee: lead.assignedEmployee,
+      adminAssigned: adminId[0]._id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      whatsAppNo: lead.whatsAppNo,
+      departureCity: lead.departureCity,
+      destination: lead.destination,
+      expectedTravelDate: lead.expectedTravelDate,
+      noOfDays: lead.noOfDays,
+      customNoOfDays: lead.customNoOfDays,
+      placesToCover: lead.placesToCover,
+      noOfPerson: lead.noOfPerson,
+      noOfChild: lead.noOfChild,
+      childAges: lead.childAges,
+      groupNumber: lead.groupNumber,
+      leadSource: lead.leadSource,
+      leadType: lead.leadType,
+      tripType: lead.tripType,
+      leadStatus: lead.leadStatus,
+      notes: lead.notes,
+      // Copy details fields so operation lead preserves full data
+      itinerary: lead.itinerary || "",
+      inclusion: lead.inclusion || "",
+      specialInclusions: lead.specialInclusions || "",
+      exclusion: lead.exclusion || "",
+      tokenAmount: lead.tokenAmount || 0,
+      totalAmount: lead.totalAmount || 0,
+      advanceRequired: lead.advanceRequired || 0,
+      discount: lead.discount || 0,
+      totalAirfare: lead.totalAirfare || 0,
+      advanceAirfare: lead.advanceAirfare || 0,
+      discountAirfare: lead.discountAirfare || 0,
+      routedFromEmployee: lead.routedFromEmployee,
+      originalCreatedAt: lead.createdAt,
+      messages: lead.messages || [],
+    });
+
+    // Delete original lead
+    await SuperadminMyleadModel.findByIdAndDelete(leadId);
+
+    return res.status(200).json({ success: true, message: "Lead transferred to operation", data: op });
+  } catch (error) {
+    console.error("Error transferring lead to operation:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getTransferLeadsByAdmin = async (req, res) => {
+  try {
+    // const { employeeId } = req.params;
+    // if (!employeeId) return res.status(400).json({ success: false, message: "employeeId is required" });
+
+    const leads = await OperationLead.find({adminAssigned:"690459d3fcb771c7776a25fe"}).sort({ transferredAt: -1 });
+    return res.status(200).json({ success: true, count: leads.length, data: leads });
+  } catch (error) {
+    console.error("Error fetching transfer leads:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

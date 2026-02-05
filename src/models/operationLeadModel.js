@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const operationLeadSchema = new mongoose.Schema({
   originalLeadId: { type: mongoose.Schema.Types.ObjectId },
   employee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
+  adminAssigned: { type: mongoose.Schema.Types.ObjectId, ref: "SuperAdmin" },
   name: { type: String },
   email: { type: String },
   phone: { type: String },

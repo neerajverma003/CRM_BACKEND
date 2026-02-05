@@ -406,6 +406,7 @@ export const markLeadAsActioned = async (req, res) => {
 export const transferLeadToOperation = async (req, res) => {
   try {
     const { leadId } = req.params;
+    const { employeeId } = req.body; // Employee performing the transfer
     if (!leadId) return res.status(400).json({ success: false, message: "leadId is required" });
 
     const lead = await EmployeeLead.findById(leadId);
@@ -415,6 +416,7 @@ export const transferLeadToOperation = async (req, res) => {
     const op = await OperationLead.create({
       originalLeadId: lead._id,
       employee: lead.employee,
+      adminAssigned: employeeId, // Assign admin if provided
       name: lead.name,
       email: lead.email,
       phone: lead.phone,
