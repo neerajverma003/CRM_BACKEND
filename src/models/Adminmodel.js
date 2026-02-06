@@ -9,6 +9,7 @@ const AdminSchema = new Schema(
     phone: { type: String, required: true },
     department: { type: String, enum: ["Sales","Marketing","IT","HR","Admin","Legal","Accounts"], trim: true },
     officalEmail: { type: String },
+    salary: { type: Number,default: 0 },
     company: [{ type: Schema.Types.ObjectId, ref: "Company" }],
     password: { type: String, required: true, trim: true, minlength: 8 },
     accountActive: { type: Boolean, default: true },

@@ -48,10 +48,76 @@ export const getAllLeads = async (req, res) => {
       .select("name email phone whatsAppNo company destination leadStatus leadSource value createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
       .sort({ createdAt: -1 })
       .skip(skip)
+      // .limit(limit)
+      .lean();
+
+    // const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.ceil(totalCount);
+
+    res.status(200).json({ 
+      success: true, 
+      data: leads,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalRecords: totalCount,
+        // limit
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+export const getRecentLeads = async (req, res) => {
+  try {
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+    
+    // Search and filter parameters
+    const search = req.query.search || "";
+    const status = req.query.status || "";
+    const destination = req.query.destination || "";
+
+    // Build filter object
+    let filter = {};
+    
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (status) {
+      filter.leadStatus = status;
+    }
+
+    if (destination) {
+      filter.destination = { $regex: destination, $options: "i" };
+    }
+
+    // Find all lead IDs that have already been assigned to some employee
+    const assignedLeadIds = await AssignLead.distinct("lead");
+    filter._id = { $nin: assignedLeadIds };
+
+    // Get total count for pagination
+    const totalCount = await Lead.countDocuments(filter);
+
+    // Return paginated leads
+    const leads = await Lead
+      .find(filter)
+      .select("name email phone whatsAppNo company destination leadStatus leadSource value createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
+      .sort({ createdAt: -1 })
+      .skip(skip)
       .limit(limit)
       .lean();
 
     const totalPages = Math.ceil(totalCount / limit);
+    // const totalPages = Math.ceil(totalCount);
 
     res.status(200).json({ 
       success: true, 

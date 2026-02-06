@@ -14,6 +14,7 @@ import {
   bulkDeleteLeads,
   getMatchedLeads,
   assignLead,
+  getRecentLeads,
 } from "../controller/leadController.js";
 
 const router = express.Router();
@@ -140,6 +141,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
    ✅ CRUD API Routes
 ---------------------------------- */
 router.get("/", getAllLeads);
+router.get("/recentleads", getRecentLeads);
 router.get("/stats", getLeadStats);
 router.get("/status/:status", getLeadsByStatus);
 router.get("/:id", getLeadById);
