@@ -4,6 +4,7 @@ const invoiceSchema = new mongoose.Schema(
   {
     invoiceNo: { type: String, required: true, unique: true },
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'EmployeeLead', required: true },
+    origin:{ type: String, required: true }, // "sales" or "b2b"
     customerName: { type: String, required: true },
     customerEmail: { type: String },
     customerPhone: { type: String },

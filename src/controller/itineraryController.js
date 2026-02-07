@@ -19,12 +19,12 @@ const streamUpload = (fileBuffer) => {
 // ================= CREATE ITINERARY (multiple PDFs) =================
 export const createItinerary = async (req, res) => {
   try {
-    const { Destination, NoOfDay } = req.body;
+    const { Destination, NoOfDay,TravelType } = req.body;
 
-    if (!Destination || !NoOfDay || !req.files || req.files.length === 0) {
+    if (!TravelType || !Destination || !NoOfDay || !req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Destination, NoOfDay, and at least one PDF are required",
+        message: "Destination, NoOfDay, TravelType and at least one PDF are required",
       });
     }
 
@@ -37,6 +37,7 @@ export const createItinerary = async (req, res) => {
 
     const newItinerary = await Itinerary.create({
       Destination,
+      TravelType,
       NoOfDay,
       Upload: uploadedUrls, // array of URLs
     });
