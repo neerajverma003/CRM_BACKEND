@@ -204,6 +204,11 @@ import profileRoutes from "./src/routes/profileRoutes.js";
 import candidateRoutes from "./src/routes/candidateRoutes.js";
 import employeeRoleRoutes from "./src/routes/employeeRoleRoutes.js";
 import cloudinary from "./config/cloudinary.js";
+
+
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
+
 connectDB(); //  Connect to MongoDB
 
 app.use(express.json({ limit: '50mb' })); //  Enable JSON body parsing with limit
@@ -275,13 +280,15 @@ app.get('/ping', (req, res) => {
 });
 
 // File upload endpoint for itinerary PDFs (Cloudinary)
-app.post('/upload', async (req, res) => {
+app.post('/upload',upload.single("file"), async (req, res) => {
   try {
-    if (!req.files || !req.files.file) {
+    // console.log(req.file); // Debug: log the files object
+    
+    if (!req.file || !req.file.originalname) {
       return res.status(400).json({ success: false, message: 'No file provided' });
     }
 
-    const file = req.files.file;
+    const file = req.file;
     const { leadName } = req.body; // Get lead name from request body
     
     const allowedMimes = ['application/pdf'];
@@ -297,15 +304,16 @@ app.post('/upload', async (req, res) => {
 
     // Create folder path: customer_data/{leadName}
     const folderPath = leadName ? `customer_data/${leadName.replace(/\s+/g, '_')}` : 'customer_data/itineraries';
+    // console.log(folderPath);
 
     // Upload to Cloudinary with organized folder structure
-    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+    const result = await cloudinary.uploader.upload(file.path, {
       resource_type: 'raw',
       folder: folderPath,
       use_filename: true,
       access_mode: 'public',
     });
-
+    
     console.log('Cloudinary upload result:', { secure_url: result.secure_url, public_id: result.public_id });
     res.status(200).json({ success: true, fileUrl: result.secure_url, message: 'File uploaded successfully' });
   } catch (error) {
