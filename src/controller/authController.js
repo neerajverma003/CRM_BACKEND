@@ -73,6 +73,11 @@ export const loginUser = async (req, res) => {
     }
 
     const user = await Model.findOne({ email });
+    // console.log(user);
+    
+    if(user.accountActive === false) {
+      return res.status(403).json({ message: "Account is deactivated. Please contact support." });
+    }
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);

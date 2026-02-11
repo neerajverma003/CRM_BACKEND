@@ -1,4 +1,5 @@
 import customerCreation from "../models/customerCreation.js";
+import customerData from "../models/customerData.js";
 
 
 export const createCustomer = async(req , res)=>{
@@ -25,7 +26,7 @@ export const createCustomer = async(req , res)=>{
 
 export const getAllCustomers = async(req,res)=>{
     try {
-        const customers = await customerCreation.find({})
+        const customers = await customerData.find({})
         if(!customers){
             return res.status(404).json({message:"No customers found"})
         }

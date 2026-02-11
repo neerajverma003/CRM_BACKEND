@@ -15,6 +15,7 @@ import {
   getMatchedLeads,
   assignLead,
   getRecentLeads,
+  getTodayLeads,
 } from "../controller/leadController.js";
 
 const router = express.Router();
@@ -144,6 +145,7 @@ router.get("/", getAllLeads);
 router.get("/recentleads", getRecentLeads);
 router.get("/stats", getLeadStats);
 router.get("/status/:status", getLeadsByStatus);
+router.get("/gettodaysleads", getTodayLeads);
 router.get("/:id", getLeadById);
 router.post("/lead", createLead);
 router.post("/bulk-delete", bulkDeleteLeads);

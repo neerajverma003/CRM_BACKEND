@@ -207,7 +207,12 @@ import cloudinary from "./config/cloudinary.js";
 
 
 import multer from "multer";
-const upload = multer({ dest: "uploads/" });
+// const upload = multer({ dest: "uploads/" });
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
 
 connectDB(); //  Connect to MongoDB
 
@@ -290,6 +295,7 @@ app.post('/upload',upload.single("file"), async (req, res) => {
 
     const file = req.file;
     const { leadName } = req.body; // Get lead name from request body
+    // console.log(file);
     
     const allowedMimes = ['application/pdf'];
     
@@ -307,7 +313,11 @@ app.post('/upload',upload.single("file"), async (req, res) => {
     // console.log(folderPath);
 
     // Upload to Cloudinary with organized folder structure
-    const result = await cloudinary.uploader.upload(file.path, {
+    // const result = await cloudinary.uploader.upload(file.path, {
+    const result = await cloudinary.uploader.upload(
+  `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+  {
+
       resource_type: 'raw',
       folder: folderPath,
       use_filename: true,

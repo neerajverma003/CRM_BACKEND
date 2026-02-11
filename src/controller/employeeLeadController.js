@@ -2,6 +2,7 @@ import EmployeeLead from "../models/employeeLeadModel.js";
 import Employee from "../models/employeeModel.js";
 import OperationLead from "../models/operationLeadModel.js";
 import CustomerCreation from "../models/customerCreation.js";
+import CustomerData from "../models/customerData.js";
 import { cloudinary } from "../../config/upload.js";
 import SuperadminMyleadModel from "../models/SuperadminMyleadModel.js";
 
@@ -254,11 +255,19 @@ export const addMessage = async (req, res) => {
       { new: true }
     );
     console.log(updatedLead);
-    
+    let updatedLeadFallback = null;
+    if(updatedLead==null){
+       updatedLeadFallback = await EmployeeLead.findByIdAndUpdate(
+        leadId,
+        { $push: { messages: msg } },
+        { new: true }
+      );
+      console.log('Fallback updated lead:', updatedLeadFallback);
+    }
 
-    if (!updatedLead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    if (!updatedLead && !updatedLeadFallback) return res.status(404).json({ success: false, message: 'Lead not found' });
 
-    return res.status(200).json({ success: true, data: updatedLead });
+    return res.status(200).json({ success: true, data: updatedLead || updatedLeadFallback });
   } catch (error) {
     console.error('Error adding message to lead:', error);
     return res.status(500).json({ success: false, message: error.message });
@@ -507,11 +516,15 @@ export const moveTransferLeadToCustomer = async (req, res) => {
 
     console.log('Creating customer with data:', JSON.stringify(customerData, null, 2));
     
-    const createdCustomer = await CustomerCreation.create(customerData);
+    const createdCustomer = await CustomerData.create(customerData);
     console.log('Customer created successfully:', createdCustomer._id);
 
     // Keep the operation lead in database (don't delete) - just copy to customer-data
-    console.log(`Successfully moved lead ${leadId} to customer-data while keeping it in OperationLead`);
+    // console.log(`Successfully moved lead ${leadId} to customer-data while keeping it in OperationLead`);
+
+    // delete from operation lead after moving to customer-data
+    await OperationLead.findByIdAndDelete(leadId);
+
 
     return res.status(200).json({ success: true, message: 'Lead moved to customer-data', data: createdCustomer });
   } catch (error) {
@@ -922,3 +935,24 @@ export const getEmployeeLeadStats = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getAllEmployeeLead=async (req,res)=>{
+  try{
+    // const totalCount = await EmployeeLead.countDocuments(filter);
+    const leads = await EmployeeLead.find().populate("employee", "fullName email department")
+      .sort({ createdAt: -1 })
+      .lean();
+    res.status(200).json({
+      success: true,
+      count: leads.length,
+      leads
+    }); 
+  }catch (error) {
+    console.error("Error fetching all employee leads:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching all employee leads",
+      error: error.message,
+    });
+  }
+}

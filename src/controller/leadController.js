@@ -1,6 +1,7 @@
 import Lead from "../models/LeadModel.js"
 import Employee from "../models/employeeModel.js"
 import AssignLead from "../models/AssignLeadModel.js";
+import EmployeeLead from "../models/employeeLeadModel.js";
 
 // Get all leads (only those that are NOT assigned to any employee) with pagination
 export const getAllLeads = async (req, res) => {
@@ -143,6 +144,71 @@ export const getLeadById = async (req, res) => {
     res.status(200).json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// export const getTodayLeads = async (req, res) => {
+//   try {
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
+//     const tomorrow = new Date(today);
+//     tomorrow.setDate(tomorrow.getDate() + 1);
+
+//     const leads = await Lead.find({
+//       createdAt: { $gte: today, $lt: tomorrow }
+//     });
+
+//     res.status(200).json({ success: true, data: leads });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+
+export const getTodayLeads = async (req, res) => {
+  try {
+    // Start of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Start of tomorrow
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    // Fetch both leads in parallel
+    const [normalLeads, employeeLeads] = await Promise.all([
+      Lead.find({
+        createdAt: { $gte: startOfDay, $lt: endOfDay }
+      }).lean(),
+
+      EmployeeLead.find({
+        createdAt: { $gte: startOfDay, $lt: endOfDay }
+      }).lean()
+    ]);
+
+    // Add type to distinguish
+    const combinedLeads = [
+      ...normalLeads.map(l => ({ ...l, type: "normal" })),
+      ...employeeLeads.map(l => ({ ...l, type: "employee" }))
+    ];
+
+    // Sort by latest
+    combinedLeads.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json({
+      success: true,
+      total: combinedLeads.length,
+      data: combinedLeads
+    });
+
+  } catch (error) {
+    console.error("Today Leads Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

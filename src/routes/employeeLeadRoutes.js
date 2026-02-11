@@ -20,6 +20,7 @@ import {
   moveTransferLeadToCustomer,
   saveDetails,
   getEmployeeLeadStats,
+  getAllEmployeeLead,
 } from "../controller/employeeLeadController.js";
 import { documentUpload } from "../../config/upload.js";
 
@@ -30,6 +31,7 @@ router.post("/", createLead);
 
 //  Get all leads
 router.get("/get", getAllLeads);
+router.get("/getallemployeelead",getAllEmployeeLead)
 
 //  Get all employee leads (must come before /:leadId to avoid route conflict)
 router.get("/all", getAllEmployeeLeads);
