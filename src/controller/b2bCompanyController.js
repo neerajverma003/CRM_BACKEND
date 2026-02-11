@@ -33,6 +33,18 @@ export const getCompanies = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch companies", error });
   }
 };
+export const getCompaniesByname = async (req, res) => {
+  const company = req.params.company;
+  try {
+    const companies = await B2bCompany.find({ company: company })
+      .populate("state", "state") // populate state name
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(companies);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch companies", error });
+  }
+};
 
 
 // GET COMPANY BY ID

@@ -339,6 +339,22 @@ export const deleteCompany = async(req,res)=>{
        }
 }
 
+export const getCompanyByName = async(req,res)=>{
+  try {
+      const {name} = req.params;
+      console.log(name)
+      const company = await Company.findOne({companyName:name});
+      if(!company){
+          return res.status(404).json({message:"Company not found"})
+      }
+      return res.status(200).json({company})
+  } catch (error) {
+      console.log(error)
+      return res.status(500).json({message:"Server Error"}) 
+     }
+}
+
+
 export const uploadCompanyLogo = async (req, res) => {
   try {
     if (!req.file || !req.file.buffer) {

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const employeeLeadSchema = new mongoose.Schema({
   employee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee", required: true }, // Employee ID reference
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true }, // Company ID reference
   name: { type: String },
   email: { type: String },
   phone: { type: String },

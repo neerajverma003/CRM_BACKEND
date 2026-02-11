@@ -11,6 +11,7 @@ export const createLead = async (req, res) => {
     const {
       employeeId,
       employee: employeeFromBody,
+      companyId,
       name,
       phone,
       email,
@@ -64,6 +65,7 @@ export const createLead = async (req, res) => {
       childAges,
       groupNumber,
       employee: employeeToUse,
+      companyId,
       routedFromEmployee: routedFromEmployee || null,
       isActioned: isActioned !== undefined ? isActioned : false,
     });
