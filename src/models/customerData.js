@@ -26,6 +26,18 @@ const customerDataSchema = new mongoose.Schema(
     tripType: { type: String },
     leadStatus: { type: String },
     notes: { type: String },
+    // Details modal fields (copied from EmployeeLead)
+    itinerary: { type: String },
+    inclusion: { type: String },
+    specialInclusions: { type: String },
+    exclusion: { type: String },
+    tokenAmount: { type: Number },
+    totalAmount: { type: Number },
+    advanceRequired: { type: Number },
+    discount: { type: Number },
+    totalAirfare: { type: Number },
+    advanceAirfare: { type: Number },
+    discountAirfare: { type: Number },
     routedFromEmployee: { type: mongoose.Schema.Types.Mixed },
     originalLeadId: { type: String },
     originalCreatedAt: { type: Date },
@@ -42,6 +54,7 @@ const customerDataSchema = new mongoose.Schema(
         cloudinaryPublicId: { type: String },
       }
     ],
+    transferredAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
