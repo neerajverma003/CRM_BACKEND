@@ -12,7 +12,7 @@ const operationLeadSchema = new mongoose.Schema({
   destination: { type: String },
   expectedTravelDate: { type: Date },
   noOfDays: { type: String },
-  customNoOfDays: { type: String },
+  customNoOfDays: { type: String }, 
   placesToCover: { type: String },
   noOfPerson: { type: Number },
   noOfChild: { type: Number },

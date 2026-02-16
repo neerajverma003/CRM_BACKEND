@@ -7,6 +7,7 @@ import {
   getLeadById,
   getOperationLeadById,
   updateLead,
+  deleteLead,
   markLeadAsActioned,
   addMessage,
   getMessages,
@@ -47,6 +48,9 @@ router.get("/:leadId", getLeadById);
 
 //  Update a lead by lead ID
 router.put("/:leadId", updateLead);
+
+// Delete a lead by lead ID
+router.delete("/:leadId", deleteLead);
 
 // Add a message to a lead
 router.post("/:leadId/message", addMessage);

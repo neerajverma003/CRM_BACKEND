@@ -203,7 +203,10 @@ import salaryRoutes from "./src/routes/salaryRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
 import candidateRoutes from "./src/routes/candidateRoutes.js";
 import employeeRoleRoutes from "./src/routes/employeeRoleRoutes.js";
+import employeeDataRoutes from "./src/routes/employeeDataRoutes.js";
 import cloudinary from "./config/cloudinary.js";
+import simRoutes from "./src/routes/simRoutes.js";
+import emailRoutes from "./src/routes/emailRoutes.js";
 
 
 import multer from "multer";
@@ -257,6 +260,10 @@ app.use("/salary", salaryRoutes);
 app.use("/profiles", profileRoutes);
 app.use("/candidates", candidateRoutes);
 app.use("/employeerole", employeeRoleRoutes);
+app.use("/employeedata", employeeDataRoutes);
+// Inventory routes (SIM numbers and Emails)
+app.use('/inventory/sim', simRoutes);
+app.use('/inventory/email', emailRoutes);
 
 // Global error handler for uncaught errors
 app.use((err, req, res, next) => {

@@ -12,7 +12,7 @@ const B2bCompanySchema = new mongoose.Schema(
       ref: "b2bState",
       required: true,
     },
-    companyName: {
+    companyName: { 
       type: String,
       required: true,
     },
@@ -35,6 +35,12 @@ const B2bCompanySchema = new mongoose.Schema(
     address: {
       type: String,
       required: true,
+    }
+    ,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employee",
+      required: false,
     }
   },
   { timestamps: true }

@@ -95,6 +95,7 @@ export const getAllLeads = async (req, res) => {
 
     if (search) {
       filter.$or = [
+        { groupNumber: { $regex: search, $options: "i" } },
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
@@ -116,9 +117,9 @@ export const getAllLeads = async (req, res) => {
     // Fetch paginated leads with only necessary fields
     const leads = await EmployeeLead
       .find(filter)
-      .select("name email phone whatsAppNo company destination leadStatus leadSource createdAt employee groupNumber noOfDays expectedTravelDate")
+      .select("name email phone whatsAppNo company destination leadStatus leadSource createdAt updatedAt employee groupNumber noOfDays expectedTravelDate")
       .populate("employee", "fullName email department")
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -232,6 +233,35 @@ export const updateLead = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while updating lead",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteLead = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+
+    if (!leadId) {
+      return res.status(400).json({ success: false, message: "Lead ID is required" });
+    }
+
+    const deletedLead = await EmployeeLead.findByIdAndDelete(leadId);
+
+    if (!deletedLead) {
+      return res.status(404).json({ success: false, message: "Lead not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Lead deleted successfully",
+      data: deletedLead,
+    });
+  } catch (error) {
+    console.error("Error deleting lead:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting lead",
       error: error.message,
     });
   }

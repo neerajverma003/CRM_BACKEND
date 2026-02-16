@@ -25,6 +25,7 @@ export const getAllLeads = async (req, res) => {
         { email: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
         { company: { $regex: search, $options: "i" } },
+        { groupNumber: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -47,7 +48,7 @@ export const getAllLeads = async (req, res) => {
     const leads = await Lead
       .find(filter)
       .select("name email phone whatsAppNo company destination leadStatus leadSource value createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1, createdAt: -1 })
       .skip(skip)
       // .limit(limit)
       .lean();
@@ -86,6 +87,7 @@ export const getRecentLeads = async (req, res) => {
     
     if (search) {
       filter.$or = [
+        { groupNumber: { $regex: search, $options: "i" } },
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
@@ -112,7 +114,7 @@ export const getRecentLeads = async (req, res) => {
     const leads = await Lead
       .find(filter)
       .select("name email phone whatsAppNo company destination leadStatus leadSource value createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();

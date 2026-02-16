@@ -3,13 +3,16 @@ import B2bCompany from "../models/b2bcompanyModel.js";
 // CREATE NEW COMPANY
 export const createCompany = async (req, res) => {
   try {
+    // log incoming body for debug
+    console.log("[b2b] createCompany body:", req.body);
     const newCompany = new B2bCompany(req.body);
     const savedCompany = await newCompany.save();
     res.status(201).json(savedCompany);
   } catch (error) {
     res.status(500).json({ message: "Failed to create company", error });
   }
-};
+}; 
+
 
 // GET ALL COMPANIES
 // export const getCompanies = async (req, res) => {
@@ -43,6 +46,31 @@ export const getCompaniesByname = async (req, res) => {
     res.status(200).json(companies);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch companies", error });
+  }
+};
+
+// GET COMPANIES CREATED BY A SPECIFIC EMPLOYEE
+export const getCompaniesByEmployee = async (req, res) => {
+  const employeeId = req.params.employeeId;
+  try {
+    console.log("[b2b] getCompaniesByEmployee for:", employeeId);
+    // First try matching createdBy field
+    let companies = await B2bCompany.find({ createdBy: employeeId })
+      .populate("state", "state")
+      .populate("createdBy", "fullName email")
+      .sort({ createdAt: -1 });
+
+    // If none found, fallback to matching 'company' name if employee belongs to a company name
+    if ((!companies || companies.length === 0) && req.query.companyName) {
+      companies = await B2bCompany.find({ company: req.query.companyName })
+        .populate("state", "state")
+        .populate("createdBy", "fullName email")
+        .sort({ createdAt: -1 });
+    }
+
+    res.status(200).json({ count: companies.length, companies });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch companies for employee", error });
   }
 };
 
