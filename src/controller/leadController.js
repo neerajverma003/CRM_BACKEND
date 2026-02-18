@@ -13,6 +13,7 @@ export const getAllLeads = async (req, res) => {
     
     // Search and filter parameters
     const search = req.query.search || "";
+    const searchField = req.query.searchField || "name"; // Field to search in
     const status = req.query.status || "";
     const destination = req.query.destination || "";
 
@@ -20,13 +21,17 @@ export const getAllLeads = async (req, res) => {
     let filter = {};
     
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-        { groupNumber: { $regex: search, $options: "i" } },
-      ];
+      // Map frontend searchField to database field names
+      const fieldMap = {
+        name: "name",
+        phone: "phone",
+        groupNumber: "groupNumber",
+        email: "email",
+        destination: "destination"
+      };
+
+      const dbField = fieldMap[searchField] || "name";
+      filter[dbField] = { $regex: search, $options: "i" };
     }
 
     if (status) {
@@ -79,27 +84,39 @@ export const getRecentLeads = async (req, res) => {
     
     // Search and filter parameters
     const search = req.query.search || "";
+    const searchField = req.query.searchField || "name"; // Field to search in (name, phone, groupNumber, email, destination)
     const status = req.query.status || "";
     const destination = req.query.destination || "";
+
+    console.log("=== getRecentLeads Debug ===");
+    console.log("Search Text:", search);
+    console.log("Search Field:", searchField);
+    console.log("Status:", status);
 
     // Build filter object
     let filter = {};
     
     if (search) {
-      filter.$or = [
-        { groupNumber: { $regex: search, $options: "i" } },
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-      ];
+      // Map frontend searchField to database field names
+      const fieldMap = {
+        name: "name",
+        phone: "phone",
+        groupNumber: "groupNumber",
+        email: "email",
+        destination: "destination"
+      };
+
+      const dbField = fieldMap[searchField] || "name";
+      console.log("Database Field Being Used:", dbField);
+      filter[dbField] = { $regex: search, $options: "i" };
+      console.log("Filter Created:", JSON.stringify(filter));
     }
 
     if (status) {
       filter.leadStatus = status;
     }
 
-    if (destination) {
+    if (destination && !filter.destination) {
       filter.destination = { $regex: destination, $options: "i" };
     }
 

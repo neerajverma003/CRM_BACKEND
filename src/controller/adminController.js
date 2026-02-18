@@ -302,8 +302,9 @@ export const getAssignedRolesByAdminAndCompany = async (req, res) => {
         // Fetch subRole names from SubRole collection
         let subRoles = [];
         try {
-          if (Array.isArray(role.roleId?.subRole) && role.roleId.subRole.length) {
-            const subRoleDocs = await SubRole.find({ _id: { $in: role.roleId.subRole } }).lean();
+          // Use role.subRoles (assigned subRoles), NOT role.roleId.subRole (all subRoles)
+          if (Array.isArray(role.subRoles) && role.subRoles.length) {
+            const subRoleDocs = await SubRole.find({ _id: { $in: role.subRoles } }).lean();
             
             // Create a map for easy lookup
             const map = {};
@@ -312,14 +313,14 @@ export const getAssignedRolesByAdminAndCompany = async (req, res) => {
             });
 
             // Map subRole IDs to their names
-            subRoles = role.roleId.subRole.map((id) => ({
+            subRoles = role.subRoles.map((id) => ({
               _id: id,
               subRoleName: map[id.toString()] || "Unknown Sub-role",
             }));
           }
         } catch (e) {
           console.error("Error fetching subRole names:", e);
-          subRoles = (role.roleId?.subRole || []).map((id) => ({
+          subRoles = (role.subRoles || []).map((id) => ({
             _id: id,
             subRoleName: "Unknown Sub-role",
           }));

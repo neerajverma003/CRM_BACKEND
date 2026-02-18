@@ -207,6 +207,7 @@ import employeeDataRoutes from "./src/routes/employeeDataRoutes.js";
 import cloudinary from "./config/cloudinary.js";
 import simRoutes from "./src/routes/simRoutes.js";
 import emailRoutes from "./src/routes/emailRoutes.js";
+import taskAssignRoutes from "./src/routes/taskAssignRoutes.js";
 
 
 import multer from "multer";
@@ -264,6 +265,8 @@ app.use("/employeedata", employeeDataRoutes);
 // Inventory routes (SIM numbers and Emails)
 app.use('/inventory/sim', simRoutes);
 app.use('/inventory/email', emailRoutes);
+// Task Management routes
+app.use("/tasks", taskAssignRoutes);
 
 // Global error handler for uncaught errors
 app.use((err, req, res, next) => {

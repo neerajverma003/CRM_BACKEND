@@ -87,6 +87,7 @@ export const getAllLeads = async (req, res) => {
     
     // Filter parameters
     const search = req.query.search || "";
+    const searchField = req.query.searchField || "name"; // Field to search in (name, phone, groupNumber, email, destination)
     const status = req.query.status || "";
     const employeeId = req.query.employeeId || "";
 
@@ -94,13 +95,17 @@ export const getAllLeads = async (req, res) => {
     let filter = {};
 
     if (search) {
-      filter.$or = [
-        { groupNumber: { $regex: search, $options: "i" } },
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { company: { $regex: search, $options: "i" } },
-      ];
+      // Map frontend searchField to database field names
+      const fieldMap = {
+        name: "name",
+        phone: "phone",
+        groupNumber: "groupNumber",
+        email: "email",
+        destination: "destination"
+      };
+
+      const dbField = fieldMap[searchField] || "name";
+      filter[dbField] = { $regex: search, $options: "i" };
     }
 
     if (status) {
@@ -354,18 +359,24 @@ export const getAllEmployeeLeads = async (req, res) => {
     
     // Search and filter parameters
     const search = req.query.search || "";
+    const searchField = req.query.searchField || "name"; // Field to search in
     const status = req.query.status || "";
 
     // Build filter object
     let filter = {};
     
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { destination: { $regex: search, $options: "i" } },
-      ];
+      // Map frontend searchField to database field names
+      const fieldMap = {
+        name: "name",
+        phone: "phone",
+        groupNumber: "groupNumber",
+        email: "email",
+        destination: "destination"
+      };
+
+      const dbField = fieldMap[searchField] || "name";
+      filter[dbField] = { $regex: search, $options: "i" };
     }
 
     if (status) {
