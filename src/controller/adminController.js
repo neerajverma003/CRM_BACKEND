@@ -9,10 +9,10 @@ import jwt from "jsonwebtoken";
 // -------------------- Admin Registration --------------------
 export const register = async (req, res) => {
   try {
-    const { fullName, email, password, phone, role, accountActive } = req.body;
+    const { fullName, email, password, phone, role, accountActive, officialEmail, officialNo, emergencyNo } = req.body;
 
     if (!fullName || !email || !password || !role || !phone) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "Required fields are missing: fullName, email, password, role, or phone" });
     }
 
     const duplicate = await Admin.findOne({ email });
@@ -29,6 +29,10 @@ export const register = async (req, res) => {
       role,
       phone,
       accountActive: accountActive !== undefined ? accountActive : true,
+      officalEmail: officialEmail || "",
+      officialEmail: officialEmail || "",
+      officialNo: officialNo || "",
+      emergencyNo: emergencyNo || "",
     });
 
     await admin.save();

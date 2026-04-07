@@ -175,6 +175,7 @@ import loginRoutes from "./src/routes/loginRoutes.js"
 import leadRoutes from "./src/routes/leadRoutes.js"
 import chequeRoutes from "./src/routes/chequeRoutes.js"
 import expenseRoutes from "./src/routes/expenseRoutes.js"
+import ledgerRoutes from "./src/routes/ledgerRoutes.js"
 import employeeLeadRoutes from "./src/routes/employeeLeadRoutes.js"
 import departmentRoutes from "./src/routes/departmentRoutes.js"
 import designationRoutes from "./src/routes/designationRoutes.js";
@@ -208,7 +209,8 @@ import cloudinary from "./config/cloudinary.js";
 import simRoutes from "./src/routes/simRoutes.js";
 import emailRoutes from "./src/routes/emailRoutes.js";
 import taskAssignRoutes from "./src/routes/taskAssignRoutes.js";
-
+import offerLetterRoutes from "./src/routes/offerLetterRoutes.js";
+import offerLetterFormatRoutes from "./src/routes/offerLetterFormatRoutes.js";
 
 import multer from "multer";
 // const upload = multer({ dest: "uploads/" });
@@ -239,6 +241,7 @@ app.use('/superadminmylead', superadminMyleadRoutes);
 app.use("/cheque", chequeRoutes)
 app.use('/login' , loginRoutes)
 app.use('/expense',expenseRoutes)
+app.use('/ledger', ledgerRoutes)
 app.use('/adminAttendance' , AdminAttendance)
 app.use("/employeelead",employeeLeadRoutes)
 app.use('/department',departmentRoutes)
@@ -267,6 +270,8 @@ app.use('/inventory/sim', simRoutes);
 app.use('/inventory/email', emailRoutes);
 // Task Management routes
 app.use("/tasks", taskAssignRoutes);
+app.use("/offer-letter", offerLetterRoutes);
+app.use("/offer-letter-format", offerLetterFormatRoutes);
 
 // Global error handler for uncaught errors
 app.use((err, req, res, next) => {

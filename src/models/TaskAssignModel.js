@@ -13,6 +13,59 @@ const TaskAssignSchema = new Schema(
       required: false,
       trim: true,
     },
+    contentType: {
+      type: String,
+      enum: ["description", "numbers"],
+      default: "description",
+    },
+    numberData: [
+      {
+        row: {
+          type: Number,
+          required: true,
+        },
+        col1: {
+          type: String,
+          default: "",
+        },
+        col2: {
+          type: String,
+          default: "",
+        },
+        col3: {
+          type: String,
+          default: "",
+        },
+        col4: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
+    originalNumberData: [
+      {
+        row: {
+          type: Number,
+          required: true,
+        },
+        col1: {
+          type: String,
+          default: "",
+        },
+        col2: {
+          type: String,
+          default: "",
+        },
+        col3: {
+          type: String,
+          default: "",
+        },
+        col4: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
     assignedBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",

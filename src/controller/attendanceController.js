@@ -633,9 +633,9 @@ export const getAttendanceForAllEmployee = async (req, res) => {
     }
 
     const attendanceRecords = await Attendance.find(filter)
-      .populate("employee", "fullName email role department")
-      .populate("company", "name")
-      .select("-__v")
+      .select("employee status clockIn clockOut date")
+      .populate("employee", "fullName")
+      .lean()
       .sort({ date: -1 });
 
     return res.status(200).json(attendanceRecords);

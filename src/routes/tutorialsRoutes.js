@@ -284,6 +284,7 @@ router.post("/", (req, res, next) => {
         if (isPdf) {
           const dataUri = `data:application/pdf;base64,${file.buffer.toString('base64')}`;
           // Use uploader.upload which accepts data URI; explicitly set resource_type 'raw'
+          // mianly for PDFs since they are more prone to corruption with upload_stream if not
           const retry = await cloudinary.uploader.upload(dataUri, {
             folder: folderPath,
             resource_type: 'raw',
@@ -420,6 +421,7 @@ router.get("/company/:companyId", async (req, res) => {
 // =====================
 // GET /tutorials/department/:departmentId
 // Get tutorials by department
+// added endpoint to fetch tutorials directly by department, which can be useful for department-specific views without needing to specify company
 // =====================
 router.get("/department/:departmentId", async (req, res) => {
   try {

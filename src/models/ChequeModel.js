@@ -11,6 +11,11 @@ const chequeSchema = new Schema({
     type:Date,
     required:true,
   },
+  // New field: when the cheque is actually presented to the bank
+  chequePresentDate:{
+    type:Date,
+    required:false,
+  },
   receiverName:{
     type:String,
     required:true,

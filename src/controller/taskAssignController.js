@@ -4,7 +4,7 @@ import Employee from "../models/employeeModel.js";
 // Create a new task assignment
 export const createTask = async (req, res) => {
   try {
-    const { taskTitle, description, assignedTo, priority, dueDate, company } = req.body;
+    const { taskTitle, description, assignedTo, priority, dueDate, company, contentType, numberData } = req.body;
     const assignedBy = req.user ? req.user.id : req.body.assignedBy;
 
     // Validation
@@ -29,6 +29,9 @@ export const createTask = async (req, res) => {
     const newTask = new TaskAssign({
       taskTitle,
       description: description || "",
+      contentType: contentType || "description",
+      numberData: contentType === "numbers" ? numberData || [] : [],
+      originalNumberData: contentType === "numbers" ? numberData || [] : [],
       assignedBy,
       assignedTo,
       taskStatus: "Pending",
@@ -270,14 +273,29 @@ export const updateTaskStatus = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const { taskTitle, description, priority, dueDate, company } = req.body;
+    const { taskTitle, description, priority, dueDate, company, contentType, numberData } = req.body;
+
+    const task = await TaskAssign.findById(taskId);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
 
     const updateData = {};
-    if (taskTitle) updateData.taskTitle = taskTitle;
-    if (description) updateData.description = description;
-    if (priority) updateData.priority = priority;
-    if (dueDate) updateData.dueDate = dueDate;
-    if (company) updateData.company = company;
+    if (taskTitle !== undefined) updateData.taskTitle = taskTitle;
+    if (description !== undefined) updateData.description = description;
+    if (priority !== undefined) updateData.priority = priority;
+    if (dueDate !== undefined) updateData.dueDate = dueDate;
+    if (company !== undefined) updateData.company = company;
+    if (contentType !== undefined) updateData.contentType = contentType;
+    if (numberData !== undefined && numberData !== null) {
+      if (!task.originalNumberData || task.originalNumberData.length === 0) {
+        updateData.originalNumberData = task.numberData || [];
+      }
+      updateData.numberData = numberData;
+    }
 
     const updatedTask = await TaskAssign.findByIdAndUpdate(taskId, updateData, {
       new: true,

@@ -67,6 +67,8 @@ export const updateCheque = async (req, res) => {
     const updatePayload = { ...req.body };
     // Normalize clearedDate to Date if present
     if (updatePayload.clearedDate) updatePayload.clearedDate = new Date(updatePayload.clearedDate);
+    // Normalize chequePresentDate to Date if present
+    if (updatePayload.chequePresentDate) updatePayload.chequePresentDate = new Date(updatePayload.chequePresentDate);
     const updated = await Cheque.findByIdAndUpdate(id, updatePayload, { new: true });
     if (!updated) return res.status(404).json({ success: false, message: "Cheque not found" });
     return res.status(200).json({ success: true, data: updated });

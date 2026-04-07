@@ -923,8 +923,9 @@ export const getAllAdminAttendance = async (req, res) => {
     }
 
     const records = await AdminAttendance.find(filter)
-      .populate("admin", "fullName email role department")
-      .populate("company", "name")
+      .select("admin status clockIn clockOut date")
+      .populate("admin", "fullName")
+      .lean()
       .sort({ date: -1 });
 
     res.status(200).json(records);
