@@ -1,4 +1,5 @@
 import OfferLetterFormat from "../models/OfferLetterFormatModel.js";
+import puppeteer from "puppeteer";
 
 export const createOfferLetterFormat = async (req, res) => {
   try {
@@ -75,5 +76,66 @@ export const deleteOfferLetterFormat = async (req, res) => {
   } catch (error) {
     console.error("Error deleting format:", error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const generatePDF = async (req, res) => {
+  let browser;
+  try {
+    const { htmlContent, fileName = "offer_letter.pdf", companyName = "Admire Softech Solutions Pvt Ltd" } = req.body;
+
+    if (!htmlContent) {
+      return res.status(400).json({ success: false, message: "HTML content is required" });
+    }
+
+    // Launch browser
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
+    const page = await browser.newPage();
+
+    // Set content
+    await page.setContent(htmlContent, { waitUntil: "networkidle2" });
+
+    // Generate PDF with header and footer
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      displayHeaderFooter: true,
+      headerTemplate: `
+        <div style="width:100%; padding: 10px 20px; font-size:12px; font-family: Arial, sans-serif;">
+          <b>${companyName}</b>
+        </div>
+      `,
+      footerTemplate: `
+        <div style="width:100%; padding: 10px 20px; text-align:center; font-size:10px; font-family: Arial, sans-serif;">
+          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+        </div>
+      `,
+      margin: {
+        top: "100px",
+        bottom: "80px",
+        left: "20px",
+        right: "20px",
+      },
+      printBackground: true,
+    });
+
+    // Send PDF
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+      "Content-Length": pdfBuffer.length,
+    });
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };

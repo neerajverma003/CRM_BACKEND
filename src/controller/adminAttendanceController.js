@@ -960,29 +960,36 @@ export const editAdminAttendance = async (req, res) => {
     let { clockIn, clockOut, status } = req.body;
 
     console.log("🟢 Incoming update:", req.body);
+    console.log("🟢 Types - clockIn:", typeof clockIn, "clockOut:", typeof clockOut, "status:", typeof status);
 
     // ✅ Convert clockIn and clockOut to valid Date objects if strings
     const today = new Date();
     const toDateTime = (timeStr) => {
       if (!timeStr) return null;
+      console.log("🔄 Converting timeStr:", timeStr, "type:", typeof timeStr);
       // If it's an ISO date string, parse it directly
       if (timeStr.includes('T') || timeStr.includes('-')) {
-        return new Date(timeStr);
+        const date = new Date(timeStr);
+        console.log("📅 Parsed ISO date:", date);
+        return date;
       }
       // Otherwise, treat as "HH:MM" format
       const [hours, minutes] = timeStr.split(":").map(Number);
       const d = new Date(today);
       d.setHours(hours, minutes, 0, 0);
+      console.log("⏰ Parsed HH:MM date:", d);
       return d;
     };
 
     if (typeof clockIn === "string") clockIn = toDateTime(clockIn);
     if (typeof clockOut === "string") clockOut = toDateTime(clockOut);
 
+    console.log("✅ Final data - clockIn:", clockIn, "clockOut:", clockOut, "status:", status);
+
     const updatedAttendance = await AdminAttendance.findByIdAndUpdate(
       id,
       { clockIn, clockOut, status },
-      { new: true, runValidators: true }
+      { new: true }
     );
 
     if (!updatedAttendance) {

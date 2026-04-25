@@ -2,42 +2,71 @@ import mongoose from "mongoose";
 
 const offerLetterSchema = new mongoose.Schema(
   {
-    employee: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
+    // Offer Details
+    refNumber: {
+      type: String,
+      trim: true,
       required: true,
     },
+    offerDate: {
+      type: Date,
+      required: true,
+    },
+    // Candidate Information
     candidateName: {
       type: String,
       required: true,
       trim: true,
     },
-    designation: {
+    candidateEmail: {
       type: String,
       trim: true,
     },
-    department: {
+    candidatePhone: {
       type: String,
       trim: true,
+    },
+    candidateAddress: {
+      type: String,
+      trim: true,
+    },
+    // Employment Terms
+    jobTitle: {
+      type: String,
+      trim: true,
+      required: true,
     },
     joiningDate: {
       type: Date,
+      required: true,
+    },
+    employmentType: {
+      type: String,
+      trim: true,
+    },
+    reportingTo: {
+      type: String,
+      trim: true,
     },
     salary: {
       type: String,
       trim: true,
+      required: true,
     },
-    expiryDate: {
-      type: Date,
+    benefits: {
+      type: String,
+      trim: true,
     },
+    // Job Responsibilities
+    jobResponsibilities: {
+      type: String,
+      trim: true,
+    },
+    // Status
     status: {
       type: String,
       enum: ["Draft", "Sent", "Accepted", "Rejected"],
       default: "Draft",
-    },
-    letterContent: {
-      type: String,
-      trim: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,7 +1,10 @@
 import express from 'express'
-import { createInvoice, getAllInvoices, getInvoiceById, updateInvoice, deleteInvoice, fixInvoiceSnapshots } from '../controller/invoiceController.js'
+import { createInvoice, getAllInvoices, getInvoiceById, updateInvoice, deleteInvoice, fixInvoiceSnapshots, getLastInvoiceNumber } from '../controller/invoiceController.js'
 
 const router = express.Router()
+
+// Get last invoice number
+router.get('/last-number', getLastInvoiceNumber)
 
 // Create invoice
 router.post('/create', createInvoice)

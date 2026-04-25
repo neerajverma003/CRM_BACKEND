@@ -211,6 +211,7 @@ import emailRoutes from "./src/routes/emailRoutes.js";
 import taskAssignRoutes from "./src/routes/taskAssignRoutes.js";
 import offerLetterRoutes from "./src/routes/offerLetterRoutes.js";
 import offerLetterFormatRoutes from "./src/routes/offerLetterFormatRoutes.js";
+import bankRoutes from "./src/routes/bankRoutes.js";
 
 import multer from "multer";
 // const upload = multer({ dest: "uploads/" });
@@ -272,6 +273,7 @@ app.use('/inventory/email', emailRoutes);
 app.use("/tasks", taskAssignRoutes);
 app.use("/offer-letter", offerLetterRoutes);
 app.use("/offer-letter-format", offerLetterFormatRoutes);
+app.use("/bank", bankRoutes);
 
 // Global error handler for uncaught errors
 app.use((err, req, res, next) => {

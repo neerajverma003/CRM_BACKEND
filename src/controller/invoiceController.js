@@ -4,7 +4,7 @@ import EmployeeLead from '../models/employeeLeadModel.js'
 // Create a new invoice
 export const createInvoice = async (req, res) => {
   try {
-    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, amount, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot } = req.body
+    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, amount, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot, gstInvoiceType, gstNumber, bankId, bankName } = req.body
 
     if (!invoiceNo || !customerId || !origin || !date || !amount || !costType || !paymentMode) {
       return res.status(400).json({ success: false, message: 'Missing required fields' })
@@ -42,6 +42,10 @@ export const createInvoice = async (req, res) => {
       inclusions,
       termsConditions,
       paymentPolicy,
+      gstInvoiceType: gstInvoiceType || 'without-gst',
+      gstNumber: gstInvoiceType === 'with-gst' ? gstNumber : null,
+      bankId: bankId || null,
+      bankName: bankName || null,
       status: 'issued',
       customerSnapshot: leadSnapshot || {},
       departureCity: leadSnapshot?.departureCity,
@@ -202,6 +206,28 @@ export const deleteInvoice = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Invoice deleted successfully'
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+// Get the last invoice number
+export const getLastInvoiceNumber = async (req, res) => {
+  try {
+    const lastInvoice = await Invoice.findOne({}, { invoiceNo: 1 }).sort({ createdAt: -1 }).lean()
+    
+    if (lastInvoice && lastInvoice.invoiceNo) {
+      return res.status(200).json({
+        success: true,
+        lastNumber: lastInvoice.invoiceNo
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      lastNumber: null
     })
   } catch (err) {
     console.error(err)

@@ -37,11 +37,15 @@ const invoiceSchema = new mongoose.Schema(
     endDate: { type: Date },
     amount: { type: Number, required: true },
     advancePayment: { type: Number, default: 0 },
-    costType: { type: String, enum: ['land', 'airfare'], required: true },
+    costType: { type: String, enum: ['land', 'airfare', 'combo'], required: true },
     paymentMode: { type: String, required: true },
     inclusions: { type: String },
     termsConditions: { type: String },
     paymentPolicy: { type: String },
+    gstInvoiceType: { type: String, enum: ['with-gst', 'without-gst'], default: 'without-gst' },
+    gstNumber: { type: String },
+    bankId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bank' },
+    bankName: { type: String },
     status: { type: String, enum: ['draft', 'issued', 'paid', 'overdue'], default: 'draft' }
   },
   { timestamps: true }
