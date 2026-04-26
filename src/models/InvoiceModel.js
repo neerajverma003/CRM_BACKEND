@@ -44,6 +44,8 @@ const invoiceSchema = new mongoose.Schema(
     paymentPolicy: { type: String },
     gstInvoiceType: { type: String, enum: ['with-gst', 'without-gst'], default: 'without-gst' },
     gstNumber: { type: String },
+    gstPercentage: { type: Number, default: 0 },
+    gstAmount: { type: Number, default: 0 },
     bankId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bank' },
     bankName: { type: String },
     status: { type: String, enum: ['draft', 'issued', 'paid', 'overdue'], default: 'draft' }

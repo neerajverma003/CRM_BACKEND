@@ -4,7 +4,7 @@ import EmployeeLead from '../models/employeeLeadModel.js'
 // Create a new invoice
 export const createInvoice = async (req, res) => {
   try {
-    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, amount, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot, gstInvoiceType, gstNumber, bankId, bankName } = req.body
+    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, amount, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot, gstInvoiceType, gstNumber, gstPercentage, gstAmount, bankId, bankName } = req.body
 
     if (!invoiceNo || !customerId || !origin || !date || !amount || !costType || !paymentMode) {
       return res.status(400).json({ success: false, message: 'Missing required fields' })
@@ -44,6 +44,8 @@ export const createInvoice = async (req, res) => {
       paymentPolicy,
       gstInvoiceType: gstInvoiceType || 'without-gst',
       gstNumber: gstInvoiceType === 'with-gst' ? gstNumber : null,
+      gstPercentage: gstInvoiceType === 'with-gst' ? parseFloat(gstPercentage || 0) : 0,
+      gstAmount: gstInvoiceType === 'with-gst' ? parseFloat(gstAmount || 0) : 0,
       bankId: bankId || null,
       bankName: bankName || null,
       status: 'issued',
