@@ -1,5 +1,5 @@
 import express from 'express'
-import { createInvoice, getAllInvoices, getInvoiceById, updateInvoice, deleteInvoice, fixInvoiceSnapshots, getLastInvoiceNumber } from '../controller/invoiceController.js'
+import { createInvoice, getAllInvoices, getInvoiceById, getInvoicesByCustomer, updateInvoice, deleteInvoice, fixInvoiceSnapshots, getLastInvoiceNumber } from '../controller/invoiceController.js'
 
 const router = express.Router()
 
@@ -11,7 +11,8 @@ router.post('/create', createInvoice)
 
 // Get all invoices
 router.get('/all', getAllInvoices)
-
+// Get invoices by customer
+router.get('/customer/:customerId', getInvoicesByCustomer)
 // Get invoice by ID
 router.get('/:invoiceId', getInvoiceById)
 

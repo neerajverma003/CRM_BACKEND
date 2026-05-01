@@ -37,6 +37,7 @@ const invoiceSchema = new mongoose.Schema(
     endDate: { type: Date },
     amount: { type: Number, required: true },
     advancePayment: { type: Number, default: 0 },
+    totalPreviousAdvancePayment: { type: Number, default: 0 },
     costType: { type: String, enum: ['land', 'airfare', 'combo'], required: true },
     paymentMode: { type: String, required: true },
     inclusions: { type: String },

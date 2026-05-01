@@ -4,7 +4,7 @@ import EmployeeLead from '../models/employeeLeadModel.js'
 // Create a new invoice
 export const createInvoice = async (req, res) => {
   try {
-    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, endDate, amount, advancePayment, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot, gstInvoiceType, gstNumber, gstPercentage, gstAmount, bankId, bankName } = req.body
+    const { invoiceNo, customerId, origin, customerName, customerEmail, customerPhone, date, endDate, amount, advancePayment, totalPreviousAdvancePayment, costType, paymentMode, inclusions, termsConditions, paymentPolicy, customerSnapshot: payloadSnapshot, gstInvoiceType, gstNumber, gstPercentage, gstAmount, bankId, bankName } = req.body
 
     if (!invoiceNo || !customerId || !origin || !date || !amount || !costType || !paymentMode) {
       return res.status(400).json({ success: false, message: 'Missing required fields' })
@@ -50,6 +50,7 @@ export const createInvoice = async (req, res) => {
       gstAmount: gstInvoiceType === 'with-gst' ? parseFloat(gstAmount || 0) : 0,
       bankId: bankId || null,
       bankName: bankName || null,
+      totalPreviousAdvancePayment: parseFloat(totalPreviousAdvancePayment || 0),
       status: 'issued',
       customerSnapshot: leadSnapshot || {},
       departureCity: leadSnapshot?.departureCity,
@@ -139,6 +140,24 @@ export const getAllInvoices = async (req, res) => {
   try {
     const invoices = await Invoice.find()
       .populate('customerId', 'name phone email')
+      .sort({ createdAt: -1 })
+
+    return res.status(200).json({
+      success: true,
+      count: invoices.length,
+      data: invoices
+    })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+// Get invoices by customer
+export const getInvoicesByCustomer = async (req, res) => {
+  try {
+    const { customerId } = req.params
+    const invoices = await Invoice.find({ customerId })
       .sort({ createdAt: -1 })
 
     return res.status(200).json({
