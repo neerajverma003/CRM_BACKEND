@@ -73,15 +73,22 @@ export const loginUser = async (req, res) => {
     }
 
     const user = await Model.findOne({ email });
-    // console.log(user);
     
-    if(user.accountActive === false) {
+    if (!user) {
+      console.log(`Login attempt failed: User ${email} not found for role ${roleKey}`);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.accountActive === false) {
+      console.log(`Login attempt blocked: Account ${email} is deactivated`);
       return res.status(403).json({ message: "Account is deactivated. Please contact support." });
     }
-    if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.log(`Login attempt failed: Incorrect password for ${email}`);
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const payload = { id: user._id, role: roleKey };
 
@@ -89,7 +96,13 @@ export const loginUser = async (req, res) => {
       payload.companyId = user.company;
     }
 
-    const token = jwt.sign(payload, process.env.JWT, { expiresIn: "1d" });
+    const jwtSecret = process.env.JWT || process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error("JWT Secret is missing in environment variables!");
+      return res.status(500).json({ message: "Internal server configuration error" });
+    }
+
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: "1d" });
 
     const userResponse = {
       id: user._id,

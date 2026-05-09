@@ -301,6 +301,23 @@ app.get('/ping', (req, res) => {
   res.status(200).json({ success: true, message: 'pong', time: new Date().toISOString() });
 });
 
+// Route to check DB connection status (for debugging deployment)
+import mongoose from "mongoose";
+app.get('/db-check', (req, res) => {
+  const status = mongoose.connection.readyState;
+  const states = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  res.json({ 
+    success: status === 1, 
+    status: states[status],
+    database: mongoose.connection.name 
+  });
+});
+
 // File upload endpoint for itinerary PDFs (Cloudinary)
 app.post('/upload',upload.single("file"), async (req, res) => {
   try {
