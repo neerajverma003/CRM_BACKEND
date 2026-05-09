@@ -5,7 +5,7 @@ export const allowedOrigins = [
   // Vite / modern dev servers often run on 5173
   "http://localhost:5173",
   "https://api.admiresoftech.online",
-  "https://admiresoftech.online"
+  "http://api.admiresoftech.online"
 ];
 
 ///comments 
