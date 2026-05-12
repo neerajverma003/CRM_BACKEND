@@ -3,35 +3,54 @@ import OfferLetter from "../models/OfferLetterModel.js";
 export const createOfferLetter = async (req, res) => {
   try {
     const {
-      employee,
+      refNumber,
+      offerDate,
       candidateName,
-      designation,
-      department,
+      fatherName,
+      candidateEmail,
+      candidatePhone,
+      candidateAddress,
+      jobTitle,
       joiningDate,
+      employmentType,
+      reportingTo,
       salary,
-      expiryDate,
+      benefits,
+      jobResponsibilities,
       status,
-      letterContent,
+      companyId,
+      companyName,
+      formatId,
+      createdBy,
     } = req.body;
 
-    if (!employee) {
-      return res.status(400).json({ success: false, message: "Employee ID is required" });
+    if (!refNumber) {
+      return res.status(400).json({ success: false, message: "Reference number is required" });
     }
     if (!candidateName || !candidateName.trim()) {
       return res.status(400).json({ success: false, message: "Candidate name is required" });
     }
 
     const offerLetter = await OfferLetter.create({
-      employee,
+      refNumber,
+      offerDate: offerDate ? new Date(offerDate) : new Date(),
       candidateName: candidateName.trim(),
-      designation: designation?.trim(),
-      department: department?.trim(),
+      fatherName: fatherName ? fatherName.trim() : "",
+      candidateEmail,
+      candidatePhone,
+      candidateAddress,
+      jobTitle,
       joiningDate: joiningDate ? new Date(joiningDate) : undefined,
-      expiryDate: expiryDate ? new Date(expiryDate) : undefined,
-      salary: salary?.trim(),
+      employmentType,
+      reportingTo,
+      salary,
+      benefits,
+      jobResponsibilities,
       status: status || "Draft",
-      letterContent: letterContent?.trim(),
-      createdBy: req.body.createdBy || null,
+      companyId,
+      companyName,
+      formatId,
+      createdBy: createdBy || null,
     });
 
     res.status(201).json({ success: true, data: offerLetter });
@@ -44,7 +63,9 @@ export const createOfferLetter = async (req, res) => {
 export const getAllOfferLetters = async (req, res) => {
   try {
     const offerLetters = await OfferLetter.find()
-      .populate("employee", "fullName email")
+      .populate("createdBy", "fullName email")
+      .populate("companyId")
+      .populate("formatId", "title")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: offerLetters });
@@ -57,7 +78,10 @@ export const getAllOfferLetters = async (req, res) => {
 export const getOfferLetterById = async (req, res) => {
   try {
     const { id } = req.params;
-    const offerLetter = await OfferLetter.findById(id).populate("employee", "fullName email");
+    const offerLetter = await OfferLetter.findById(id)
+      .populate("createdBy", "fullName email")
+      .populate("companyId")
+      .populate("formatId");
 
     if (!offerLetter) {
       return res.status(404).json({ success: false, message: "Offer letter not found" });

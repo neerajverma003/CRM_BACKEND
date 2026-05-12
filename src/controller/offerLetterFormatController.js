@@ -102,17 +102,7 @@ export const generatePDF = async (req, res) => {
     // Generate PDF with header and footer
     const pdfBuffer = await page.pdf({
       format: "A4",
-      displayHeaderFooter: true,
-      headerTemplate: `
-        <div style="width:100%; padding: 10px 20px; font-size:12px; font-family: Arial, sans-serif;">
-          <b>${companyName}</b>
-        </div>
-      `,
-      footerTemplate: `
-        <div style="width:100%; padding: 10px 20px; text-align:center; font-size:10px; font-family: Arial, sans-serif;">
-          Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-        </div>
-      `,
+      displayHeaderFooter: false, // We use the HTML-based header/footer for consistent preview
       margin: {
         top: "100px",
         bottom: "80px",

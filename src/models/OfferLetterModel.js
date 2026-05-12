@@ -18,6 +18,10 @@ const offerLetterSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    fatherName: {
+      type: String,
+      trim: true,
+    },
     candidateEmail: {
       type: String,
       trim: true,
@@ -71,6 +75,18 @@ const offerLetterSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
+    },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+    companyName: {
+      type: String,
+      trim: true,
+    },
+    formatId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "OfferLetterFormat",
     },
   },
   { timestamps: true }
