@@ -1,5 +1,6 @@
 import Hotel from "../models/hotelModel.js";
-import cloudinary from "../../config/cloudinary.js";
+import { uploadToS3, deleteFromS3 } from "../utils/s3Upload.js";
+import fs from "fs";
 
 // ------------------- CREATE HOTEL -------------------
 export const createHotel = async (req, res) => {
@@ -24,19 +25,19 @@ export const createHotel = async (req, res) => {
 
     let hotelImages = [];
 
-    // Upload images to cloudinary if files are provided
+    // Upload images to S3 if files are provided
     if (req.files && req.files.hotelImages) {
       const files = Array.isArray(req.files.hotelImages) ? req.files.hotelImages : [req.files.hotelImages];
       
+      const cleanName = hotelName.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+      const folderPath = `hotels/${cleanName}`;
+      
       for (const file of files) {
         try {
-          const result = await cloudinary.uploader.upload(file.tempFilePath, {
-            folder: "hotels",
-            resource_type: "auto",
-          });
-          hotelImages.push(result.secure_url);
+          const result = await uploadToS3(file, file.name, folderPath, file.mimetype);
+          hotelImages.push({ url: result.url, key: result.key });
         } catch (uploadError) {
-          console.error("Error uploading image to cloudinary:", uploadError);
+          console.error("Error uploading image to S3:", uploadError);
         }
       }
     }
@@ -67,7 +68,7 @@ export const createHotel = async (req, res) => {
 export const getHotels = async (req, res) => {
   try {
     const hotels = await Hotel.find()
-      .populate("state", "state country type")  // Working now
+      .populate("state", "state country type")
       .populate("destination", "destinationName type country state");
 
     res.status(200).json(hotels);
@@ -98,73 +99,60 @@ export const getHotelById = async (req, res) => {
 // ------------------- UPDATE HOTEL -------------------
 export const updateHotel = async (req, res) => {
   try {
-    // Base update data from body
     const updateData = { ...req.body };
-
-    // Fetch existing hotel to compute final hotelImages
     const existingHotel = await Hotel.findById(req.params.id);
-    const existingImages = existingHotel?.hotelImages || [];
+    if (!existingHotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
 
-    // Parse imagesToRemove if provided (may come as JSON string)
+    const existingImages = existingHotel.hotelImages || [];
     let imagesToRemove = [];
     if (updateData.imagesToRemove) {
       imagesToRemove = updateData.imagesToRemove;
       if (typeof imagesToRemove === "string") {
-        try {
-          imagesToRemove = JSON.parse(imagesToRemove);
-        } catch (err) {
-          imagesToRemove = [imagesToRemove];
-        }
+        try { imagesToRemove = JSON.parse(imagesToRemove); } catch (err) { imagesToRemove = [imagesToRemove]; }
       }
       if (!Array.isArray(imagesToRemove)) imagesToRemove = [imagesToRemove];
     }
 
-    // Remove requested images from Cloudinary and from the existingImages list
+    // Remove requested images from S3
     if (imagesToRemove.length > 0) {
       for (const imgUrl of imagesToRemove) {
         try {
-          const publicId = getPublicIdFromUrl(imgUrl);
-          if (publicId) await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+          const key = getKeyFromUrl(imgUrl);
+          if (key) await deleteFromS3(key);
         } catch (err) {
-          console.error("Error deleting image from Cloudinary:", err);
+          console.error("Error deleting image from S3:", err);
         }
       }
     }
 
-    // Start with existing images minus removed ones
-    let finalImages = existingImages.filter(img => !imagesToRemove.includes(img));
+    let finalImages = existingImages.filter(img => {
+      const url = typeof img === 'string' ? img : img.url;
+      return !imagesToRemove.includes(url);
+    });
 
-    // Upload new images if provided and append
+    // Upload new images to S3
     if (req.files && req.files.hotelImages) {
       const files = Array.isArray(req.files.hotelImages) ? req.files.hotelImages : [req.files.hotelImages];
+      const nameToUse = updateData.hotelName || existingHotel.hotelName || 'unnamed';
+      const cleanName = nameToUse.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+      const folderPath = `hotels/${cleanName}`;
+
       for (const file of files) {
         try {
-          const result = await cloudinary.uploader.upload(file.tempFilePath, {
-            folder: "hotels",
-            resource_type: "auto",
-          });
-          finalImages.push(result.secure_url);
+          const result = await uploadToS3(file, file.name, folderPath, file.mimetype);
+          finalImages.push({ url: result.url, key: result.key });
         } catch (uploadError) {
-          console.error("Error uploading image to cloudinary:", uploadError);
+          console.error("Error uploading image to S3:", uploadError);
         }
       }
     }
 
-    // Set computed images array on updateData
     updateData.hotelImages = finalImages;
-    // remove imagesToRemove so it isn't stored on the document
     delete updateData.imagesToRemove;
 
-    const updated = await Hotel.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: "Hotel not found" });
-    }
-
+    const updated = await Hotel.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.status(200).json(updated);
   } catch (error) {
     console.error("Error updating hotel:", error);
@@ -172,20 +160,16 @@ export const updateHotel = async (req, res) => {
   }
 };
 
-// Helper to extract cloudinary public id from a secure url
-const getPublicIdFromUrl = (url) => {
+// Helper to extract S3 key from URL
+const getKeyFromUrl = (url) => {
   if (!url) return null;
   try {
-    // remove query params
-    const clean = url.split("?")[0];
-    const parts = clean.split("/upload/");
-    if (parts.length < 2) return null;
-    let afterUpload = parts[1]; // e.g. v1234567890/hotels/abc123.jpg
-    // remove version prefix v12345/
-    afterUpload = afterUpload.replace(/^v\d+\//, "");
-    // remove file extension
-    const withoutExt = afterUpload.replace(/\.[^/.]+$/, "");
-    return withoutExt; // e.g. hotels/abc123
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    if (pathname.startsWith('/')) {
+      return pathname.substring(1);
+    }
+    return pathname;
   } catch (err) {
     return null;
   }
@@ -195,11 +179,9 @@ const getPublicIdFromUrl = (url) => {
 export const deleteHotel = async (req, res) => {
   try {
     const deleted = await Hotel.findByIdAndDelete(req.params.id);
-
     if (!deleted) {
       return res.status(404).json({ message: "Hotel not found" });
     }
-
     res.status(200).json({ message: "Hotel deleted successfully" });
   } catch (error) {
     console.error("Error deleting hotel:", error);

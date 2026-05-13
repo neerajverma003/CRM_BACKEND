@@ -349,6 +349,7 @@ export const saveDetails = async (req, res) => {
     const { leadId } = req.params;
     const {
       itinerary,
+      itineraryKey,
       inclusion,
       specialInclusions,
       exclusion,
@@ -369,6 +370,7 @@ export const saveDetails = async (req, res) => {
       leadId,
       {
         itinerary: itinerary || "",
+        itineraryKey: itineraryKey || "",
         inclusion: inclusion || "",
         specialInclusions: specialInclusions || "",
         exclusion: exclusion || "",
@@ -433,6 +435,7 @@ export const transferLeadToOperation = async (req, res) => {
       notes: lead.notes,
       // Copy details fields so operation lead preserves full data
       itinerary: lead.itinerary || "",
+      itineraryKey: lead.itineraryKey || "",
       inclusion: lead.inclusion || "",
       specialInclusions: lead.specialInclusions || "",
       exclusion: lead.exclusion || "",

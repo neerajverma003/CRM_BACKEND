@@ -86,6 +86,10 @@ const companySchema = new Schema(
       type: String,
       default: "",
     },
+    logoKey: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

@@ -3,7 +3,7 @@ import Employee from "../models/employeeModel.js";
 import OperationLead from "../models/operationLeadModel.js";
 import CustomerCreation from "../models/customerCreation.js";
 import CustomerData from "../models/customerData.js";
-import { cloudinary } from "../../config/upload.js";
+import { uploadToS3, deleteFromS3 } from "../utils/s3Upload.js";
 import SuperadminMyleadModel from "../models/SuperadminMyleadModel.js";
 
 export const createLead = async (req, res) => {
@@ -11,7 +11,6 @@ export const createLead = async (req, res) => {
     const {
       employeeId,
       employee: employeeFromBody,
-      companyId,
       name,
       phone,
       email,
@@ -36,11 +35,23 @@ export const createLead = async (req, res) => {
       isActioned,
     } = req.body;
 
+    let { companyId } = req.body;
+
     // Support both `employeeId` and `employee` incoming field names.
     const employeeToUse = employeeId || employeeFromBody || req.body.employee || req.body.employeeId;
 
     if (!employeeToUse) {
       return res.status(400).json({ success: false, message: "Employee ID is required" });
+    }
+
+    // If companyId is missing, fetch it from the Employee record
+    if (!companyId) {
+      const employee = await Employee.findById(employeeToUse);
+      if (employee && employee.company) {
+        companyId = employee.company;
+      } else {
+        return res.status(400).json({ success: false, message: "Company ID is required and could not be found for this employee." });
+      }
     }
 
     const lead = await EmployeeLead.create({
@@ -73,6 +84,7 @@ export const createLead = async (req, res) => {
     console.log("New Lead Created:", lead);
     res.status(201).json({ success: true, data: lead });
   } catch (error) {
+    console.error("Create Lead Error:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
@@ -490,6 +502,7 @@ export const transferLeadToOperation = async (req, res) => {
       notes: lead.notes,
       // Copy details fields so operation lead preserves full data
       itinerary: lead.itinerary || "",
+      itineraryKey: lead.itineraryKey || "",
       inclusion: lead.inclusion || "",
       specialInclusions: lead.specialInclusions || "",
       exclusion: lead.exclusion || "",
@@ -551,6 +564,7 @@ export const moveTransferLeadToCustomer = async (req, res) => {
       leadStatus: opLead.leadStatus || '',
       notes: opLead.notes || '',
       itinerary: opLead.itinerary || '',
+      itineraryKey: opLead.itineraryKey || '',
       inclusion: opLead.inclusion || '',
       specialInclusions: opLead.specialInclusions || '',
       exclusion: opLead.exclusion || '',
@@ -746,40 +760,13 @@ export const uploadTransferLeadDocuments = async (req, res) => {
         // Convert base64 back to buffer
         const buffer = Buffer.from(base64, 'base64');
         
-        // Upload to Cloudinary from buffer
-        const folder = `customer_data/${leadName}/documents`;
-        const publicId = `${Date.now()}-${personId}-${docType}`;
+        // Upload to S3 from buffer
+        const cleanName = (leadName || 'unnamed').trim().replace(/[^a-zA-Z0-9-]/g, '_');
+        const folder = `customers/${cleanName}/documents`;
         
-        console.log(`Uploading to Cloudinary: folder=${folder}, publicId=${publicId}, fileType=${fileType}`);
+        const result = await uploadToS3(buffer, fileName, folder, fileType);
 
-        // Determine resource type based on file type
-        let resourceType = 'auto';
-        if (fileType && (fileType.includes('pdf') || fileType === 'application/pdf')) {
-          resourceType = 'raw';
-        }
-
-        // Upload stream
-        const result = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: folder,
-              public_id: publicId,
-              resource_type: resourceType,
-              type: 'upload',
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-
-          uploadStream.end(buffer);
-        });
-
-        console.log("Cloudinary upload result:", {
-          public_id: result.public_id,
-          secure_url: result.secure_url,
-        });
+        console.log("S3 upload result:", result);
 
         // Add document metadata
         documents.push({
@@ -787,14 +774,14 @@ export const uploadTransferLeadDocuments = async (req, res) => {
           personId: personId,
           documentType: docType,
           fileName: fileName,
-          fileUrl: result.secure_url,
+          fileUrl: result.url,
           fileType: fileType,
-          cloudinaryPublicId: result.public_id,
+          key: result.key,
           uploadedAt: new Date(),
         });
 
       } catch (fileError) {
-        console.error("Error uploading file to Cloudinary:", fileError);
+        console.error("Error uploading file to S3:", fileError);
         return res.status(400).json({
           success: false,
           message: `Failed to upload ${fileData.fileName}: ${fileError.message}`
@@ -830,7 +817,7 @@ export const uploadTransferLeadDocuments = async (req, res) => {
       const keptExistingIds = Array.isArray(keptExistingIdsRaw) ? keptExistingIdsRaw : [];
       if (keptExistingIds.length > 0) {
         // Keep documents explicitly referenced by public id
-        existingKept = (existingLead.documents || []).filter(d => keptExistingIds.includes(d.cloudinaryPublicId));
+        existingKept = (existingLead.documents || []).filter(d => keptExistingIds.includes(d.key));
       } else {
         // Explicit empty array: infer kept documents from provided peopleData so that
         // removing one person doesn't wipe out others when the frontend couldn't
@@ -880,25 +867,24 @@ export const uploadTransferLeadDocuments = async (req, res) => {
 export const deleteTransferDocument = async (req, res) => {
   try {
     console.log("=== Delete Transfer Document ===");
-    const { leadId, cloudinaryPublicId } = req.body;
+    const { leadId, key } = req.body;
 
-    if (!leadId || !cloudinaryPublicId) {
-      return res.status(400).json({ success: false, message: "leadId and cloudinaryPublicId are required" });
+    if (!leadId || !key) {
+      return res.status(400).json({ success: false, message: "leadId and key are required" });
     }
 
-    // Delete from Cloudinary
+    // Delete from S3
     try {
-      const destroyResult = await cloudinary.uploader.destroy(cloudinaryPublicId, { resource_type: 'auto' });
-      console.log('Cloudinary destroy result:', destroyResult);
-    } catch (cloudErr) {
-      console.error('Cloudinary delete error:', cloudErr);
-      // continue to try removing from DB even if cloud deletion fails
+      await deleteFromS3(key);
+      console.log('S3 destroy result success');
+    } catch (s3Err) {
+      console.error('S3 delete error:', s3Err);
     }
 
     // Remove document record from OperationLead
     const updatedLead = await OperationLead.findByIdAndUpdate(
       leadId,
-      { $pull: { documents: { cloudinaryPublicId: cloudinaryPublicId } } },
+      { $pull: { documents: { key: key } } },
       { new: true }
     );
 
@@ -919,6 +905,7 @@ export const saveDetails = async (req, res) => {
     const { leadId } = req.params;
     const {
       itinerary,
+      itineraryKey,
       inclusion,
       specialInclusions,
       exclusion,
@@ -939,6 +926,7 @@ export const saveDetails = async (req, res) => {
       leadId,
       {
         itinerary: itinerary || "",
+        itineraryKey: itineraryKey || "",
         inclusion: inclusion || "",
         specialInclusions: specialInclusions || "",
         exclusion: exclusion || "",

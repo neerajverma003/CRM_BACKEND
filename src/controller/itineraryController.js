@@ -1,45 +1,37 @@
 import Itinerary from "../models/ItineraryModel.js";
-import cloudinary from "../../config/cloudinary.js";
-import streamifier from "streamifier";
-
-// Helper function to upload buffer to Cloudinary
-const streamUpload = (fileBuffer) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { resource_type: "raw", folder: "itineraries" },
-      (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
-      }
-    );
-    streamifier.createReadStream(fileBuffer).pipe(stream);
-  });
-};
+import { uploadToS3 } from "../utils/s3Upload.js";
 
 // ================= CREATE ITINERARY (multiple PDFs) =================
 export const createItinerary = async (req, res) => {
   try {
-    const { Destination, NoOfDay,TravelType } = req.body;
+    const { Destination, NoOfDay, TravelType } = req.body;
 
-    if (!TravelType || !Destination || !NoOfDay || !req.files || req.files.length === 0) {
+    if (!TravelType || !Destination || !NoOfDay || !req.files || !req.files.Upload) {
       return res.status(400).json({
         success: false,
         message: "Destination, NoOfDay, TravelType and at least one PDF are required",
       });
     }
 
-    // Upload all files to Cloudinary
-    const uploadedUrls = [];
-    for (const file of req.files) {
-      const result = await streamUpload(file.buffer);
-      uploadedUrls.push(result.secure_url);
+    // Normalize files to array
+    const files = Array.isArray(req.files.Upload) ? req.files.Upload : [req.files.Upload];
+
+    // Upload all files to S3
+    const uploadedFiles = [];
+    const cleanDest = Destination.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+    const cleanDays = NoOfDay.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+    const folderPath = `itineraries/${cleanDest}/${cleanDays}`;
+
+    for (const file of files) {
+      const result = await uploadToS3(file, file.name, folderPath, file.mimetype);
+      uploadedFiles.push({ url: result.url, key: result.key });
     }
 
     const newItinerary = await Itinerary.create({
       Destination,
       TravelType,
       NoOfDay,
-      Upload: uploadedUrls, // array of URLs
+      Upload: uploadedFiles, // array of objects {url, key}
     });
 
     return res.status(201).json({

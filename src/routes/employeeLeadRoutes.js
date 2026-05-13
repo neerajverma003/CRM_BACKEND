@@ -23,7 +23,7 @@ import {
   getEmployeeLeadStats,
   getAllEmployeeLead,
 } from "../controller/employeeLeadController.js";
-import { documentUpload } from "../../config/upload.js";
+
 
 const router = express.Router();
 

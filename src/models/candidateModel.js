@@ -34,6 +34,10 @@ const candidateSchema = new mongoose.Schema({
     type: String, // File path for uploaded resume
     default: null
   },
+  key: {
+    type: String,
+    default: null
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

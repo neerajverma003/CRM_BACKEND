@@ -25,6 +25,7 @@ const operationLeadSchema = new mongoose.Schema({
   notes: { type: String },
   // Details modal fields (copied from EmployeeLead)
   itinerary: { type: String },
+  itineraryKey: { type: String },
   inclusion: { type: String },
   specialInclusions: { type: String },
   exclusion: { type: String },
@@ -44,6 +45,7 @@ const operationLeadSchema = new mongoose.Schema({
       fileUrl: { type: String },
       fileType: { type: String }, // image/jpeg, application/pdf, etc.
       uploadedAt: { type: Date, default: Date.now },
+      key: { type: String },
     }
   ],
   routedFromEmployee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee", default: null },

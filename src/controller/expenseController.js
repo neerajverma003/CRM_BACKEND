@@ -1,15 +1,20 @@
 import Expense from "../models/ExpenseModel.js";
-import cloudinary from "../../config/cloudinary.js"
+import { uploadToS3 } from "../utils/s3Upload.js";
 
 export const createExpense = async (req, res) => {
   try {
-    // Check if a file was uploaded
-    if (!req.file) {
+    if (!req.files || !req.files.bill) {
       return res.status(400).json({ success: false, message: "No bill file uploaded" });
     }
 
-    // The uploaded file is available as req.file
-    // req.file.path contains the Cloudinary URL (if using multer-storage-cloudinary)
+    const file = req.files.bill;
+    const cleanReason = (req.body.reason || 'misc').trim().replace(/[^a-zA-Z0-9-]/g, '_');
+    const d = new Date(req.body.date || Date.now());
+    const yearMonth = `${d.getFullYear()}_${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const folderPath = `expenses/${yearMonth}/${cleanReason}`;
+
+    const uploadResult = await uploadToS3(file, file.name, folderPath, file.mimetype);
+
     const { AmountPaid, PaymentMethod, reason, date } = req.body;
 
     const expense = await Expense.create({
@@ -17,7 +22,8 @@ export const createExpense = async (req, res) => {
       PaymentMethod,
       reason,
       date,
-      bill: req.file.path, // store Cloudinary URL here
+      bill: uploadResult.url,
+      key: uploadResult.key,
     });
 
     console.log("✅ Expense Created:", expense);

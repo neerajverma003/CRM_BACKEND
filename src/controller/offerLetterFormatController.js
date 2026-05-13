@@ -3,15 +3,16 @@ import puppeteer from "puppeteer";
 
 export const createOfferLetterFormat = async (req, res) => {
   try {
-    const body = {
-      ...req.body,
-      createdBy: req.body.createdBy || null,
-    };
+    const body = { ...req.body };
+    delete body._id;
+    delete body.__v;
+    delete body.createdAt;
+    delete body.updatedAt;
 
     if (body.companyId) {
       const updatedObject = await OfferLetterFormat.findOneAndUpdate(
         { companyId: body.companyId },
-        body,
+        { ...body, createdBy: body.createdBy || null },
         {
           new: true,
           upsert: true,
@@ -21,7 +22,7 @@ export const createOfferLetterFormat = async (req, res) => {
       return res.status(200).json({ success: true, data: updatedObject });
     }
 
-    const object = await OfferLetterFormat.create(body);
+    const object = await OfferLetterFormat.create({ ...body, createdBy: body.createdBy || null });
     return res.status(201).json({ success: true, data: object });
   } catch (error) {
     console.error("Error creating/updating offer letter format:", error);
@@ -58,7 +59,13 @@ export const getOfferLetterFormatById = async (req, res) => {
 export const updateOfferLetterFormat = async (req, res) => {
   try {
     const { id } = req.params;
-    const updated = await OfferLetterFormat.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    const body = { ...req.body };
+    delete body._id;
+    delete body.__v;
+    delete body.createdAt;
+    delete body.updatedAt;
+
+    const updated = await OfferLetterFormat.findByIdAndUpdate(id, body, { new: true, runValidators: true });
     if (!updated) return res.status(404).json({ success: false, message: "Format not found" });
     return res.status(200).json({ success: true, data: updated });
   } catch (error) {

@@ -1,19 +1,16 @@
 import express from "express";
-import multer from "multer";
 import XLSX from "xlsx";
-import fs from "fs";
-import Lead from "../models/Lead.js";
+import Lead from "../models/LeadModel.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
 
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(req.files.file.data);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(sheet);
@@ -86,8 +83,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         errors.push(`Row ${index + 2}: ${err.message}`);
       }
     }
-
-    fs.unlinkSync(req.file.path);
 
     res.json({
       message: "Lead import completed",

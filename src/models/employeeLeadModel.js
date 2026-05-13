@@ -33,6 +33,7 @@ const employeeLeadSchema = new mongoose.Schema({
   notes: { type: String },
   // Details modal fields
   itinerary: { type: String }, // filename of uploaded itinerary
+  itineraryKey: { type: String }, // S3 key for secure rendering
   inclusion: { type: String }, // inclusions in package
   specialInclusions: { type: String }, // special inclusions (optional)
   exclusion: { type: String }, // exclusions from package

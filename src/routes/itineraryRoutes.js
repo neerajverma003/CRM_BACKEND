@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import {
   createItinerary,
   getAllItineraries,
@@ -10,12 +9,8 @@ import {
 
 const router = express.Router();
 
-// Multer setup (memory storage)
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
 // Create itinerary (multiple PDFs)
-router.post("/create", upload.array("Upload"), createItinerary); // note `array` instead of `single`
+router.post("/create", createItinerary); // note `array` instead of `single`
 
 // CRUD routes
 router.get("/", getAllItineraries);

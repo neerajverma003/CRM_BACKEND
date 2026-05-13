@@ -23,6 +23,10 @@ const expenseSchema = new Schema({
  bill:{
     type:String,
     require:true
+ },
+ key: {
+    type: String,
+    default: null
  }
 }, { timestamps: true });
 

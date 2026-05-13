@@ -45,6 +45,7 @@ const B2bOperationLeadSchema = new mongoose.Schema(
 
     // Details Section
     itinerary: { type: String, required: false },
+    itineraryKey: { type: String, required: false },
     inclusion: { type: String, required: false },
     specialInclusions: { type: String, required: false },
     exclusion: { type: String, required: false },

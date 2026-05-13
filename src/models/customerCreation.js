@@ -39,7 +39,7 @@ const customerCreatioSchema = new mongoose.Schema(
         fileUrl: { type: String },
         fileType: { type: String },
         uploadedAt: { type: Date, default: Date.now },
-        cloudinaryPublicId: { type: String },
+        key: { type: String },
       }
     ],
   },

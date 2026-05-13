@@ -28,6 +28,7 @@ const customerDataSchema = new mongoose.Schema(
     notes: { type: String },
     // Details modal fields (copied from EmployeeLead)
     itinerary: { type: String },
+    itineraryKey: { type: String },
     inclusion: { type: String },
     specialInclusions: { type: String },
     exclusion: { type: String },
@@ -51,7 +52,7 @@ const customerDataSchema = new mongoose.Schema(
         fileUrl: { type: String },
         fileType: { type: String },
         uploadedAt: { type: Date, default: Date.now },
-        cloudinaryPublicId: { type: String },
+        key: { type: String },
       }
     ],
     transferredAt: { type: Date, default: Date.now },

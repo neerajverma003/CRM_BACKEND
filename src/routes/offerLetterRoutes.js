@@ -5,10 +5,12 @@ import {
   getOfferLetterById,
   updateOfferLetter,
   deleteOfferLetter,
+  getNextRefNumber,
 } from "../controller/offerLetterController.js";
 
 const router = express.Router();
 
+router.get("/get-next-ref", getNextRefNumber);
 router.post("/", createOfferLetter);
 router.get("/", getAllOfferLetters);
 router.get("/:id", getOfferLetterById);

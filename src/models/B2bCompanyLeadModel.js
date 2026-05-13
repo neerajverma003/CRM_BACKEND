@@ -119,6 +119,10 @@ const B2bCompanyLeadSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    itineraryKey: {
+      type: String,
+      required: false,
+    },
     inclusion: {
       type: String,
       required: false,

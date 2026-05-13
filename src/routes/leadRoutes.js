@@ -1,7 +1,5 @@
 import express from "express";
-import multer from "multer";
 import XLSX from "xlsx";
-import fs from "fs";
 import Lead from "../models/LeadModel.js";
 import {
   getAllLeads,
@@ -19,18 +17,17 @@ import {
 } from "../controller/leadController.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
 
 /* --------------------------------
    ✅  Excel Upload Route
 ---------------------------------- */
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(req.files.file.data);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rawData = XLSX.utils.sheet_to_json(sheet);
@@ -117,8 +114,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       }
     }
 
-    fs.unlinkSync(req.file.path); // delete uploaded file
-
     res.json({
       message: "Lead import completed",
       total: data.length,
@@ -135,9 +130,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-
-
-
 /* --------------------------------
    ✅ CRUD API Routes
 ---------------------------------- */
@@ -153,4 +145,5 @@ router.patch("/:id", updateLead);
 router.delete("/:id", deleteLead);
 router.get("/employee/matched-leads",  getMatchedLeads);
 router.post("/assign", assignLead);
+
 export default router;

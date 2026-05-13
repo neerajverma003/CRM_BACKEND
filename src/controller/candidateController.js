@@ -1,14 +1,12 @@
 import Candidate from '../models/candidateModel.js';
 import Profile from '../models/ProfileModel.js';
-import path from 'path';
-import fs from 'fs';
+import { uploadToS3 } from '../utils/s3Upload.js';
 
 // Create a new candidate
 const createCandidate = async (req, res) => {
   try {
     const { name, state, city, experience, profile, createdBy } = req.body;
 
-    // Validate required fields
     if (!name || !state || !city || !experience || !profile || !createdBy) {
       return res.status(400).json({
         success: false,
@@ -16,34 +14,17 @@ const createCandidate = async (req, res) => {
       });
     }
 
-
-
-    // Debug: log incoming form fields and file
-    console.log('Candidate upload req.body:', req.body);
-    console.log('Candidate upload req.file:', req.file);
-
-    // Handle file upload (Cloudinary)
+    // Handle file upload (S3)
     let resumePath = null;
-    if (req.file && req.file.path) {
-      // If using disk storage fallback (should not happen)
-      resumePath = req.file.path.replace(/\\/g, '/');
-    } else if (req.file && req.file.filename && req.file.destination) {
-      // fallback for disk
-      resumePath = path.join(req.file.destination, req.file.filename).replace(/\\/g, '/');
-    } else if (req.file && req.file.path === undefined && req.file.filename === undefined && req.file.destination === undefined && req.file.url) {
-      // Cloudinary upload
-      resumePath = req.file.url;
+    let resumeKey = null;
+    if (req.files && req.files.resume) {
+      const file = req.files.resume;
+      const cleanName = name.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+      const uploadResult = await uploadToS3(file, file.name, `candidates/${cleanName}`, file.mimetype);
+      resumePath = uploadResult.url;
+      resumeKey = uploadResult.key;
     }
 
-    // If using Cloudinary, set folder structure dynamically
-    if (req.file && req.file.filename === undefined && req.file.destination === undefined && req.file.url) {
-      // Already uploaded to Cloudinary, nothing to do
-    } else if (req.file) {
-      // If not uploaded to Cloudinary, upload now (should not happen)
-      // (Optional: implement fallback logic here)
-    }
-
-    // Create new candidate
     const candidate = new Candidate({
       name: name.trim(),
       state: state.trim(),
@@ -51,7 +32,8 @@ const createCandidate = async (req, res) => {
       experience: experience.trim(),
       profile,
       resume: resumePath,
-      createdBy
+      key: resumeKey,
+      createdBy: createdBy
     });
 
     await candidate.save();
@@ -64,16 +46,6 @@ const createCandidate = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating candidate:', error);
-
-    // If file was uploaded but candidate creation failed, delete the file
-    if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (fileError) {
-        console.error('Error deleting uploaded file:', fileError);
-      }
-    }
-
     res.status(500).json({
       success: false,
       message: 'Failed to create candidate',
@@ -147,7 +119,6 @@ const updateCandidate = async (req, res) => {
     const { id } = req.params;
     const { name, state, city, experience, profile } = req.body;
 
-    // Validate required fields
     if (!name || !state || !city || !experience || !profile) {
       return res.status(400).json({
         success: false,
@@ -164,21 +135,13 @@ const updateCandidate = async (req, res) => {
       });
     }
 
-    // Handle file upload - delete old file if new one is uploaded
+    // Handle file upload (S3)
     let resumePath = candidate.resume;
-    if (req.file) {
-      // Delete old file if it exists
-      if (candidate.resume) {
-        try {
-          const oldFilePath = path.resolve(candidate.resume);
-          if (fs.existsSync(oldFilePath)) {
-            fs.unlinkSync(oldFilePath);
-          }
-        } catch (fileError) {
-          console.error('Error deleting old file:', fileError);
-        }
-      }
-      resumePath = req.file.path.replace(/\\/g, '/');
+    if (req.files && req.files.resume) {
+      const file = req.files.resume;
+      const cleanName = name.trim().replace(/[^a-zA-Z0-9-]/g, '_');
+      const uploadResult = await uploadToS3(file.data, file.name, `candidates/${cleanName}`, file.mimetype);
+      resumePath = uploadResult.url;
     }
 
     // Update candidate
@@ -199,16 +162,6 @@ const updateCandidate = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating candidate:', error);
-
-    // If file was uploaded but update failed, delete the file
-    if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (fileError) {
-        console.error('Error deleting uploaded file:', fileError);
-      }
-    }
-
     res.status(500).json({
       success: false,
       message: 'Failed to update candidate',
@@ -234,18 +187,6 @@ const deleteCandidate = async (req, res) => {
     // Soft delete - mark as inactive
     candidate.isActive = false;
     await candidate.save();
-
-    // Optionally delete the resume file
-    if (candidate.resume) {
-      try {
-        const filePath = path.resolve(candidate.resume);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (fileError) {
-        console.error('Error deleting resume file:', fileError);
-      }
-    }
 
     res.status(200).json({
       success: true,

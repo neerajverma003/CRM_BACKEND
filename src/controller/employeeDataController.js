@@ -1,6 +1,5 @@
 import EmployeeData from "../models/employeeDataModel.js";
-import streamifier from "streamifier";
-import { cloudinary } from "../../config/upload.js";
+import { uploadToS3 } from "../utils/s3Upload.js";
 
 // Create new employee data
 export const createEmployeeData = async (req, res) => {
@@ -221,63 +220,35 @@ export const deleteEmployeeData = async (req, res) => {
 export const uploadEmployeeDocuments = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ success: false, message: "Employee ID required" });
-    }
+    if (!id) return res.status(400).json({ success: false, message: "Employee ID required" });
 
     const employee = await EmployeeData.findById(id);
-    if (!employee) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
-    }
+    if (!employee) return res.status(404).json({ success: false, message: "Employee not found" });
 
     const files = req.files || {};
+    const folderBase = `employees/${(employee.employeeName || 'unnamed').replace(/[^a-zA-Z0-9-]/g, "_")}/documents`;
 
-    // Prepare Cloudinary folder based on employee name
-    const sanitize = (str) =>
-      String(str)
-        .trim()
-        .replace(/\s+/g, "_")
-        .replace(/[^a-zA-Z0-9_\-]/g, "_")
-        .substring(0, 200);
-
-    const folderBase = `EmployeeData/${sanitize(employee.employeeName)}/documents`;
-
-    // Helper to upload a buffer to Cloudinary and return metadata
-    const uploadBuffer = (buffer, filename) => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder: folderBase,
-            resource_type: "auto",
-            public_id: `${Date.now()}-${filename.split(".")[0]}`,
-          },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          }
-        );
-        streamifier.createReadStream(buffer).pipe(uploadStream);
-      });
+    const getFileArray = (field) => {
+      if (!files[field]) return [];
+      return Array.isArray(files[field]) ? files[field] : [files[field]];
     };
 
-    // Single-file fields
     const singleFields = ["panCard", "aadharCard", "accountDetails", "pcc"];
     for (const field of singleFields) {
-      if (files[field] && files[field][0]) {
-        const file = files[field][0];
-        const result = await uploadBuffer(file.buffer, file.originalname);
+      const fileArr = getFileArray(field);
+      if (fileArr.length > 0) {
+        const file = fileArr[0];
+        const result = await uploadToS3(file, file.name, folderBase, file.mimetype);
         employee.documents = employee.documents || {};
         employee.documents[field] = {
-          url: result.secure_url || result.url,
-          public_id: result.public_id,
-          filename: file.originalname,
+          url: result.url,
+          key: result.key,
+          filename: file.name,
           uploadedAt: new Date(),
         };
       }
     }
 
-    // Multi-file fields
     const multiFields = [
       { field: "educationQualifications", target: "educationQualifications" },
       { field: "offerLetters", target: "previousCompanyOfferLetters" },
@@ -285,17 +256,16 @@ export const uploadEmployeeDocuments = async (req, res) => {
     ];
 
     for (const map of multiFields) {
-      const f = map.field;
-      const target = map.target;
-      if (files[f] && files[f].length > 0) {
+      const fileArr = getFileArray(map.field);
+      if (fileArr.length > 0) {
         employee.documents = employee.documents || {};
-        employee.documents[target] = employee.documents[target] || [];
-        for (const file of files[f]) {
-          const result = await uploadBuffer(file.buffer, file.originalname);
-          employee.documents[target].push({
-            url: result.secure_url || result.url,
-            public_id: result.public_id,
-            filename: file.originalname,
+        employee.documents[map.target] = employee.documents[map.target] || [];
+        for (const file of fileArr) {
+          const result = await uploadToS3(file.data, file.name, folderBase, file.mimetype);
+          employee.documents[map.target].push({
+            url: result.url,
+            key: result.key,
+            filename: file.name,
             uploadedAt: new Date(),
           });
         }
@@ -303,12 +273,7 @@ export const uploadEmployeeDocuments = async (req, res) => {
     }
 
     await employee.save();
-
-    const populated = await EmployeeData.findById(id)
-      .populate("company", "companyName")
-      .populate("department", "dep")
-      .populate("designation", "designation");
-
+    const populated = await EmployeeData.findById(id).populate("company department designation");
     res.status(200).json({ success: true, message: "Documents uploaded", data: populated });
   } catch (error) {
     console.error(error);
