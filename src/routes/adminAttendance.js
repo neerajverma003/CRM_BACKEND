@@ -4,7 +4,8 @@ import {
   clockOut,
   editAdminAttendance,
   getAdminAttendanceById,
-  getAllAdminAttendance
+  getAllAdminAttendance,
+  createAdminAttendance
 } from "../controller/adminAttendanceController.js";
 
 const router = express.Router();
@@ -14,4 +15,6 @@ router.post("/clockout", clockOut);
 router.get("/getAllAttendance", getAllAdminAttendance);
 router.get("/:adminId", getAdminAttendanceById);
 router.put("/editAttendance/:id", editAdminAttendance);
+router.post("/create",createAdminAttendance);
+
 export default router;
