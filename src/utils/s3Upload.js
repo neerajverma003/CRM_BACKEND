@@ -50,7 +50,7 @@ export const uploadToS3 = async (fileInput, fileName, folder = "uploads", mimeTy
 
   try {
     const result = await parallelUploads3.done();
-    const cdnUrl = `https://media.admiresoftech.online/${result.Key}`;
+    const cdnUrl = `${process.env.CDN_URL || 'https://media.admiresoftech.online'}/${result.Key}`;
     return {
       url: cdnUrl,
       key: result.Key

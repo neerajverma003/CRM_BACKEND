@@ -13,7 +13,7 @@ import Hotel from '../src/models/hotelModel.js';
 
 dotenv.config();
 
-const CDN_BASE = 'https://media.admiresoftech.online';
+const CDN_BASE = process.env.CDN_URL || 'https://media.admiresoftech.online';
 
 /**
  * Helper to rewrite Cloudinary or S3 URLs to use the custom CDN domain.
