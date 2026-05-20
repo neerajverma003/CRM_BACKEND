@@ -7,9 +7,19 @@ import {
   getEntriesForLedger,
   updateEntry,
   deleteEntry,
+  createLedgerGroup,
+  getAllLedgerGroups,
+  updateLedgerGroup,
+  deleteLedgerGroup,
 } from "../controller/ledgerController.js";
 
 const router = express.Router();
+
+// Ledger groups CRUD
+router.post("/group", createLedgerGroup);
+router.get("/group/all", getAllLedgerGroups);
+router.put("/group/:id", updateLedgerGroup);
+router.delete("/group/:id", deleteLedgerGroup);
 
 // create a ledger
 router.post("/", createLedger);
@@ -27,3 +37,4 @@ router.delete("/:id/entry/:entryId", deleteEntry);
 router.get("/:id/entries", getEntriesForLedger);
 
 export default router;
+

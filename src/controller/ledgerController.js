@@ -1,10 +1,12 @@
 import Ledger from "../models/LedgerModel.js";
 import LedgerEntry from "../models/LedgerEntryModel.js";
+import LedgerGroup from "../models/LedgerGroupModel.js";
+
 
 // create a new ledger entry
 export const createLedger = async (req, res) => {
   try {
-    const { name, alias } = req.body;
+    const { name, alias, groupId } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: "Name is required" });
     }
@@ -15,6 +17,19 @@ export const createLedger = async (req, res) => {
     }
 
     const ledger = await Ledger.create({ name: name.trim(), alias: alias?.trim() });
+
+    // If a group was selected, auto-add this ledger to that group
+    if (groupId) {
+      await LedgerGroup.findByIdAndUpdate(
+        groupId,
+        {
+          $push: {
+            members: { id: ledger._id.toString(), name: ledger.name, alias: ledger.alias || "" }
+          }
+        }
+      );
+    }
+
     res.status(201).json({ success: true, data: ledger });
   } catch (error) {
     console.error("Error creating ledger:", error);
@@ -166,3 +181,82 @@ export const deleteEntry = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// create a new ledger group
+export const createLedgerGroup = async (req, res) => {
+  try {
+    const { name, members } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Group name is required" });
+    }
+
+    const existing = await LedgerGroup.findOne({ name: name.trim() });
+    if (existing) {
+      return res.status(400).json({ success: false, message: "Group with this name already exists" });
+    }
+
+    const group = await LedgerGroup.create({ name: name.trim(), members: members || [] });
+    res.status(201).json({ success: true, data: group });
+  } catch (error) {
+    console.error("Error creating ledger group:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// get all ledger groups
+export const getAllLedgerGroups = async (req, res) => {
+  try {
+    const groups = await LedgerGroup.find({}).sort({ createdAt: -1 });
+    res.status(200).json(groups);
+  } catch (error) {
+    console.error("Error fetching ledger groups:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// update ledger group
+export const updateLedgerGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, members } = req.body;
+
+    const group = await LedgerGroup.findById(id);
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Ledger group not found" });
+    }
+
+    if (name && name.trim()) {
+      const existing = await LedgerGroup.findOne({ name: name.trim(), _id: { $ne: id } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: "Group with this name already exists" });
+      }
+      group.name = name.trim();
+    }
+
+    if (members) {
+      group.members = members;
+    }
+
+    await group.save();
+    res.status(200).json({ success: true, data: group });
+  } catch (error) {
+    console.error("Error updating ledger group:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// delete ledger group
+export const deleteLedgerGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const group = await LedgerGroup.findByIdAndDelete(id);
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Ledger group not found" });
+    }
+    res.status(200).json({ success: true, message: "Group deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting ledger group:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
