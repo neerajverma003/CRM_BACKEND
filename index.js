@@ -160,7 +160,7 @@ app.post('/upload', async (req, res) => {
     }
 
     const file = req.files.file;
-    const { leadName } = req.body;
+    const { leadName, module, employeeName } = req.body;
     
     const allowedMimes = ['application/pdf'];
     if (!allowedMimes.includes(file.mimetype)) {
@@ -172,7 +172,14 @@ app.post('/upload', async (req, res) => {
       return res.status(400).json({ success: false, message: 'File size exceeds 50 MB limit' });
     }
 
-    const folderPath = leadName ? `customer_data/${leadName.replace(/\s+/g, '_')}` : 'customer_data/itineraries';
+    let folderPath = 'customer_data/itineraries';
+    if (module === 'mylead') {
+      const empName = (employeeName || "Unknown").replace(/\s+/g, '_');
+      const personName = (leadName || "Unknown").replace(/\s+/g, '_');
+      folderPath = `mylead/${empName}/${personName}/itenary`;
+    } else if (leadName) {
+      folderPath = `customer_data/${leadName.replace(/\s+/g, '_')}`;
+    }
 
     const result = await uploadToS3(file, file.name, folderPath, file.mimetype);
     
