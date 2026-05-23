@@ -45,13 +45,13 @@ const job = schedule.scheduleJob("5 14 * * *", async () => {
           secondHalf: "Absent",
           remarks: "Did not clock in before 2:00 PM — auto-marked absent",
         });
-        console.log(`❌ [EMPLOYEE] Marked Absent: ${emp.fullName || emp._id}`);
+        // console.log(`❌ [EMPLOYEE] Marked Absent: ${emp.fullName || emp._id}`);
       } else {
-        console.log(`✅ [EMPLOYEE] ${emp.fullName || emp._id} already has attendance.`);
+        // console.log(`✅ [EMPLOYEE] ${emp.fullName || emp._id} already has attendance.`);
       }
     }
   } catch (err) {
-    console.error("❌ Employee auto-absent error:", err.message);
+    // console.error("❌ Employee auto-absent error:", err.message);
   }
 
   /* -------------------------------------------------------------------------- */

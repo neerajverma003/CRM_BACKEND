@@ -31,6 +31,11 @@ const offerLetterSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    candidateGender: {
+      type: String,
+      trim: true,
+      default: "Male",
+    },
     candidateAddress: {
       type: String,
       trim: true,
