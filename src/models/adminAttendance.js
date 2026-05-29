@@ -38,7 +38,7 @@ company: [
     // --- Work Status ---
     status: {
       type: String,
-      enum: ["Present", "Grace Present", "Late", "Half Day", "Absent"],
+      enum: ["Present", "Grace Present", "Late", "Half Day", "Absent", "CL"],
       default: "Absent",
     },
     firstHalf: {

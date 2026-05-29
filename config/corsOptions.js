@@ -1,7 +1,12 @@
 import { allowedOrigins } from "./allowedOrigins.js";
 export const corsOptions = {
   origin: function (origin, cb) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    if (
+      !origin || 
+      allowedOrigins.indexOf(origin) !== -1 || 
+      origin.startsWith("http://localhost:") || 
+      origin.startsWith("http://127.0.0.1:")
+    ) {
       console.log(origin, "Success");
       cb(null, true);
     } else {
