@@ -35,7 +35,7 @@ const attendanceSchema = new Schema(
     // --- Work Status ---
     status: {
       type: String,
-      enum: ["Present", "Grace Present", "Late", "Half Day", "Absent","Sunday","Holiday", "CL"],
+      enum: ["Present", "Grace Present", "Late", "Half Day", "Absent","Sunday","Holiday", "CL", "Casual Leave"],
       default: "Absent",
     },
     firstHalf: {

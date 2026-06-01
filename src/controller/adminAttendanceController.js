@@ -469,7 +469,7 @@ export const editAdminAttendance = async (req, res) => {
      date:new Date(date),
      clockIn:clockIn? new Date(clockIn):null,
      clockOut:clockOut? new Date(clockOut):null,
-     status:status || "present",
+     status:status || "Present",
     });
 
     await newAttendance.save();
