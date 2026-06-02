@@ -7,7 +7,7 @@ export const corsOptions = {
       origin.startsWith("http://localhost:") || 
       origin.startsWith("http://127.0.0.1:")
     ) {
-      console.log(origin, "Success");
+      // console.log(origin, "Success");
       cb(null, true);
     } else {
       console.log(origin, "Error");

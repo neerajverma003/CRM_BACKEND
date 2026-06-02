@@ -113,7 +113,9 @@ app.use("/tasks", taskAssignRoutes);
 app.use("/offer-letter", offerLetterRoutes);
 app.use("/offer-letter-format", offerLetterFormatRoutes);
 app.use("/bank", bankRoutes);
+import otpRoutes from "./src/routes/otpRoutes.js";
 
+app.use("/", otpRoutes);
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("Global error handler:", err);
@@ -193,6 +195,8 @@ app.post('/upload', async (req, res) => {
 
 app.use('/uploads', express.static('uploads'));
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
   console.log(`Server started on port ${process.env.PORT}`);
 });
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
