@@ -40,6 +40,10 @@ const TaskAssignSchema = new Schema(
           type: String,
           default: "",
         },
+        callStatus: {
+          type: String,
+          default: "",
+        },
       },
     ],
     originalNumberData: [
@@ -61,6 +65,10 @@ const TaskAssignSchema = new Schema(
           default: "",
         },
         col4: {
+          type: String,
+          default: "",
+        },
+        callStatus: {
           type: String,
           default: "",
         },
