@@ -55,11 +55,10 @@ export const getAllLeads = async (req, res) => {
       .select("name email phone whatsAppNo company destination leadStatus leadSource value createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate")
       .sort({ updatedAt: -1, createdAt: -1 })
       .skip(skip)
-      // .limit(limit)
+      .limit(limit)
       .lean();
 
-    // const totalPages = Math.ceil(totalCount / limit);
-    const totalPages = Math.ceil(totalCount);
+    const totalPages = Math.ceil(totalCount / limit);
 
     res.status(200).json({ 
       success: true, 
