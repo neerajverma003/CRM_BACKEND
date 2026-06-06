@@ -246,6 +246,7 @@
 
 import Salary from "../models/SalaryModel.js";
 import Employee from "../models/employeeModel.js";
+import Admin from "../models/Adminmodel.js";
 
 /**
  * Save/Update Salary Summary with Attendance Summary
@@ -254,6 +255,7 @@ export const saveSalarySummary = async (req, res) => {
   try {
     const {
       employeeId,
+      userType,
       month,
       year,
       baseSalary,
@@ -280,17 +282,26 @@ export const saveSalarySummary = async (req, res) => {
       });
     }
 
-    // Verify employee exists
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
+    // Verify user exists
+    let user;
+    let queryField = "employee";
+    
+    if (userType === "Admin") {
+      user = await Admin.findById(employeeId);
+      queryField = "admin";
+    } else {
+      user = await Employee.findById(employeeId);
+    }
+    
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Employee not found",
+        message: "User not found",
       });
     }
 
-    // Check if salary record already exists for this employee, month, year
-    let salaryRecord = await Salary.findOne({ employee: employeeId, month, year });
+    // Check if salary record already exists for this user, month, year
+    let salaryRecord = await Salary.findOne({ [queryField]: employeeId, month, year });
 
     if (salaryRecord) {
       // Update existing record
@@ -326,8 +337,7 @@ export const saveSalarySummary = async (req, res) => {
       });
     } else {
       // Create new record
-      const newSalary = new Salary({
-        employee: employeeId,
+      const newSalaryData = {
         month,
         year,
         baseSalary,
@@ -340,7 +350,15 @@ export const saveSalarySummary = async (req, res) => {
         totalPayable,
         status: status || "Pending",
         notes: notes || "",
-      });
+      };
+      
+      if (userType === "Admin") {
+        newSalaryData.admin = employeeId;
+      } else {
+        newSalaryData.employee = employeeId;
+      }
+      
+      const newSalary = new Salary(newSalaryData);
 
       // Store attendance summary if provided
       if (attendanceSummary) {
@@ -384,11 +402,13 @@ export const getSalarySummary = async (req, res) => {
       });
     }
 
+    const queryField = req.query.userType === "Admin" ? "admin" : "employee";
+
     const salary = await Salary.findOne({
-      employee: employeeId,
+      [queryField]: employeeId,
       month: parseInt(month),
       year: parseInt(year),
-    }).populate("employee", "fullName email salary");
+    }).populate(queryField, "fullName email salary");
 
     if (!salary) {
       return res.status(404).json({
@@ -425,8 +445,10 @@ export const getEmployeeSalaryHistory = async (req, res) => {
       });
     }
 
-    const salaries = await Salary.find({ employee: employeeId })
-      .populate("employee", "fullName email")
+    const queryField = req.query.userType === "Admin" ? "admin" : "employee";
+
+    const salaries = await Salary.find({ [queryField]: employeeId })
+      .populate(queryField, "fullName email")
       .sort({ year: -1, month: -1 });
 
     res.status(200).json({

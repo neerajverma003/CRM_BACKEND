@@ -1,84 +1,3 @@
-// import mongoose from "mongoose";
-
-// const salarySchema = new mongoose.Schema(
-//   {
-//     employee: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Employee",
-//       required: true,
-//     },
-//     month: {
-//       type: Number,
-//       required: true, // 0-11 for January-December
-//     },
-//     year: {
-//       type: Number,
-//       required: true,
-//     },
-//     baseSalary: {
-//       type: Number,
-//       required: true,
-//       default: 0,
-//     },
-//     perDaySalary: {
-//       type: Number,
-//       required: true,
-//       default: 0,
-//     },
-//     workingDays: {
-//       type: Number,
-//       required: true,
-//       default: 0,
-//     },
-//     presentDays: {
-//       type: Number,
-//       default: 0,
-//     },
-//     gracePresentDays: {
-//       type: Number,
-//       default: 0,
-//     },
-//     earnedAmount: {
-//       type: Number,
-//       required: true,
-//       default: 0,
-//     },
-//     remarkAmount: {
-//       type: Number,
-//       default: 0,
-//     },
-//     totalPayable: {
-//       type: Number,
-//       required: true,
-//       default: 0,
-//     },
-//     status: {
-//       type: String,
-//       enum: ["Pending", "Approved", "Paid"],
-//       default: "Pending",
-//     },
-//     notes: {
-//       type: String,
-//       default: "",
-//     },
-//     createdAt: {
-//       type: Date,
-//       default: Date.now,
-//     },
-//     updatedAt: {
-//       type: Date,
-//       default: Date.now,
-//     },
-//   },
-//   { timestamps: true }
-// );
-
-// // Ensure unique combination of employee, month, and year
-// salarySchema.index({ employee: 1, month: 1, year: 1 }, { unique: true });
-
-// export default mongoose.model("Salary", salarySchema);
-
-
 import mongoose from "mongoose";
 
 const salarySchema = new mongoose.Schema(
@@ -86,7 +5,10 @@ const salarySchema = new mongoose.Schema(
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
-      required: true,
+    },
+    admin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
     },
     month: {
       type: Number,
@@ -228,7 +150,8 @@ const salarySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Ensure unique combination of employee, month, and year
-salarySchema.index({ employee: 1, month: 1, year: 1 }, { unique: true });
+// Ensure unique combination of employee/admin, month, and year
+salarySchema.index({ employee: 1, month: 1, year: 1 }, { unique: true, sparse: true });
+salarySchema.index({ admin: 1, month: 1, year: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("Salary", salarySchema);
