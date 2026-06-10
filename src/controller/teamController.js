@@ -59,15 +59,15 @@ export const createTeam = async (req, res) => {
     const team = new Team({ teamLeader: teamLeaderId, members: memberIds });
     await team.save();
 
-    // Update Employees' team arrays
+    // Update Employees' team field
     await Employee.updateMany(
       { _id: { $in: memberIds } },
-      { $addToSet: { team: team._id } }
+      { $set: { team: team._id } }
     );
 
     await Employee.findByIdAndUpdate(
       teamLeaderId,
-      { $addToSet: { team: team._id } }
+      { $set: { team: team._id } }
     );
 
     res.status(201).json({ message: "Team created successfully", team });
@@ -107,36 +107,56 @@ export const getTeamById = async (req, res) => {
   }
 };
 
-// Update team members (add/remove members)
+// Update team members and leader
 export const updateTeamMembers = async (req, res) => {
   try {
-    const { memberIds } = req.body;
+    const { teamLeaderId, memberIds } = req.body;
     const team = await Team.findById(req.params.id);
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
     }
 
-    // Validate members
-    const members = await Employee.find({ _id: { $in: memberIds } });
-    if (members.length !== memberIds.length) {
-      return res.status(404).json({ message: "One or more team members not found" });
+    // Validate and update team leader
+    if (teamLeaderId) {
+      const leader = await Employee.findById(teamLeaderId);
+      if (!leader) {
+        return res.status(404).json({ message: "Team Leader not found" });
+      }
+      team.teamLeader = teamLeaderId;
     }
 
-    team.members = memberIds;
+    // Validate and update members
+    if (memberIds) {
+      const members = await Employee.find({ _id: { $in: memberIds } });
+      if (members.length !== memberIds.length) {
+        return res.status(404).json({ message: "One or more team members not found" });
+      }
+      team.members = memberIds;
+    }
+
     await team.save();
 
     // Update Employees' team references
+    // 1. Remove team reference from any employee currently associated with this team
     await Employee.updateMany(
       { team: team._id },
       { $unset: { team: "" } }
     );
+
+    // 2. Add team reference to new leader and members
+    const allIdsToUpdate = [...(memberIds || [])];
+    if (team.teamLeader) {
+      allIdsToUpdate.push(team.teamLeader.toString());
+    }
+
     await Employee.updateMany(
-      { _id: { $in: memberIds } },
-      { team: team._id }
+      { _id: { $in: allIdsToUpdate } },
+      { $set: { team: team._id } }
     );
 
-    res.json({ message: "Team members updated", team });
+    res.json({ message: "Team updated successfully", team });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };

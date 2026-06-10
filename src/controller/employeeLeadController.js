@@ -305,6 +305,7 @@ export const addMessage = async (req, res) => {
     );
     console.log(updatedLead);
     let updatedLeadFallback = null;
+    let updatedOperationLead = null;
     if(updatedLead==null){
        updatedLeadFallback = await EmployeeLead.findByIdAndUpdate(
         leadId,
@@ -312,11 +313,20 @@ export const addMessage = async (req, res) => {
         { new: true }
       );
       console.log('Fallback updated lead:', updatedLeadFallback);
+      
+      if(updatedLeadFallback == null){
+        updatedOperationLead = await OperationLead.findByIdAndUpdate(
+          leadId,
+          { $push: { messages: msg } },
+          { new: true }
+        );
+        console.log('OperationLead updated:', updatedOperationLead);
+      }
     }
 
-    if (!updatedLead && !updatedLeadFallback) return res.status(404).json({ success: false, message: 'Lead not found' });
+    if (!updatedLead && !updatedLeadFallback && !updatedOperationLead) return res.status(404).json({ success: false, message: 'Lead not found' });
 
-    return res.status(200).json({ success: true, data: updatedLead || updatedLeadFallback });
+    return res.status(200).json({ success: true, data: updatedLead || updatedLeadFallback || updatedOperationLead });
   } catch (error) {
     console.error('Error adding message to lead:', error);
     return res.status(500).json({ success: false, message: error.message });

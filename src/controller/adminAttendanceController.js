@@ -165,64 +165,13 @@ export const clockIn = async (req, res) => {
   }
 };
 
-/* -------------------------------------------------------------------------- */
-/* ✅ CLOCK-OUT */
-/* -------------------------------------------------------------------------- */
-// export const clockOut = async (req, res) => {
-//   try {
-//     const { adminId, companyId } = req.body;
-//     if (!adminId || !companyId)
-//       return res.status(400).json({ message: "Admin and company are required." });
-
-//     const { start, end } = getTodayRange();
-
-//     const record = await AdminAttendance.findOne({
-//       admin: adminId,
-//       company: companyId,
-//       date: { $gte: start, $lte: end },
-//     });
-
-//     if (!record) return res.status(404).json({ message: "No clock-in record found." });
-//     if (record.clockOut)
-//       return res.status(400).json({ message: "Already clocked out today." });
-
-//     const nowIST = moment().tz("Asia/Kolkata");
-//     record.clockOut = nowIST.toDate();
-
-//     const workedHours = Number(((nowIST - record.clockIn) / (1000 * 60 * 60)).toFixed(2));
-//     record.workDuration = Math.floor(workedHours * 60);
-
-//     // Update status based on worked hours
-//     const MIN_HALF = 3;
-//     const MIN_FULL = 7;
-
-//     if (workedHours < MIN_HALF) {
-//       record.status = "Absent";
-//       record.firstHalf = "Absent";
-//       record.secondHalf = "Absent";
-//       record.remarks = `Worked ${workedHours} hrs — Absent`;
-//     } else if (workedHours < MIN_FULL) {
-//       record.status = "Half Day";
-//       record.remarks = `Worked ${workedHours} hrs — Half Day`;
-//     } else {
-//       record.status = record.isLate ? "Late" : "Present";
-//       record.remarks = `Worked ${workedHours} hrs — ${record.status}`;
-//     }
-
-//     await record.save();
-//     return res.status(200).json({ message: "Clock-out recorded successfully.", record });
-//   } catch (error) {
-//     console.error("❌ Clock-out Error:", error);
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// };
 
 export const clockOut = async (req, res) => {
   try {
     let { adminId, companyId } = req.body;
 
     // Debug logging for mobile issues
-    console.log("🔴 Admin Clock-Out Request Received:", {
+    console.log(" Admin Clock-Out Request Received:", {
       adminId,
       companyId,
       timestamp: new Date().toISOString(),
@@ -245,7 +194,7 @@ export const clockOut = async (req, res) => {
       companyId = companyId.split(",").map(id => id.trim());
     }
 
-    console.log("🟠 Final companyId for clock-out =", companyId);
+    console.log(" Final companyId for clock-out =", companyId);
 
     // ------------------------------------
     // Today's date range
