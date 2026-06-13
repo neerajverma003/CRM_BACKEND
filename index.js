@@ -31,6 +31,7 @@ import tutorialRoutes from "./src/routes/tutorialsRoutes.js"
 import teamRoutes from "./src/routes/teamRoutes.js"
 import itineraryRoutes from "./src/routes/itineraryRoutes.js"
 import cors from "cors";
+import otpRoutes from "./src/routes/otpRoutes.js";
 import "./src/utils/scheduleJob.js"
 import { corsOptions } from "./config/corsOptions.js"; 
 import  AdminAttendance  from "./src/routes/adminAttendance.js"
@@ -55,6 +56,8 @@ import offerLetterFormatRoutes from "./src/routes/offerLetterFormatRoutes.js";
 import bankRoutes from "./src/routes/bankRoutes.js";
 import { uploadToS3 } from "./src/utils/s3Upload.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
+import experienceLetterRoutes from "./src/routes/experienceLetterRoutes.js";
+import experienceLetterFormatRoutes from "./src/routes/experienceLetterFormatRoutes.js";
 
 connectDB(); //  Connect to MongoDB
 
@@ -68,7 +71,7 @@ app.use(fileUpload({
   tempFileDir: 'tmp',
   limits: { fileSize: 500 * 1024 * 1024 } 
 }));
-
+app.use("/experience-letter",experienceLetterRoutes)
 app.use("/b2bcompany", b2bCompanyRoutes);
 app.use("/b2b-leads", b2bCompanyLeadRoutes);
 app.use("/b2b-operation-leads", b2bOperationLeadRoutes);
@@ -113,7 +116,8 @@ app.use("/tasks", taskAssignRoutes);
 app.use("/offer-letter", offerLetterRoutes);
 app.use("/offer-letter-format", offerLetterFormatRoutes);
 app.use("/bank", bankRoutes);
-import otpRoutes from "./src/routes/otpRoutes.js";
+app.use("/experience-letter-format", experienceLetterFormatRoutes);
+
 
 app.use("/", otpRoutes);
 // Global error handler
