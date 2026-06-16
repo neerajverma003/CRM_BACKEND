@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config(); //  Load env variables
 
@@ -58,7 +57,7 @@ import { uploadToS3 } from "./src/utils/s3Upload.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
 import experienceLetterRoutes from "./src/routes/experienceLetterRoutes.js";
 import experienceLetterFormatRoutes from "./src/routes/experienceLetterFormatRoutes.js";
-
+import manualPayslipRoutes from "./src/routes/manualPayslipRoutes.js";
 connectDB(); //  Connect to MongoDB
 
 app.use(express.json({ limit: '50mb' })); 
@@ -117,7 +116,7 @@ app.use("/offer-letter", offerLetterRoutes);
 app.use("/offer-letter-format", offerLetterFormatRoutes);
 app.use("/bank", bankRoutes);
 app.use("/experience-letter-format", experienceLetterFormatRoutes);
-
+app.use("/manual-payslip", manualPayslipRoutes);
 
 app.use("/", otpRoutes);
 // Global error handler

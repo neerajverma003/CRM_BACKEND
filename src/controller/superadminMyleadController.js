@@ -6,67 +6,6 @@ import EmployeeLead from "../models/employeeLeadModel.js";
 import OperationLead from "../models/operationLeadModel.js";
 import Adminmodel from "../models/Adminmodel.js";
 import superAdmin from "../models/SuperAdminModel.js";
-
-// Get all myleads for a superadmin
-// export const getAllSuperadminMyleads = async (req, res) => {
-//   try {
-//     const { superAdminId } = req.params;
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 50;
-//     const skip = (page - 1) * limit;
-
-//     const search = req.query.search || "";
-//     const status = req.query.status || "";
-//     const destination = req.query.destination || "";
-
-//     let filter = { superAdminId };
-
-//     if (search) {
-//       filter.$or = [
-//         { name: { $regex: search, $options: "i" } },
-//         { email: { $regex: search, $options: "i" } },
-//         { phone: { $regex: search, $options: "i" } },
-//       ];
-//     }
-
-//     if (status) {
-//       filter.leadStatus = status;
-//     }
-
-//     if (destination) {
-//       filter.destination = { $regex: destination, $options: "i" };
-//     }
-
-//     const totalCount = await SuperadminMylead.countDocuments(filter);
-//     console.log(filter);
-//     console.log(superAdminId); 
-
-//     const leads = await SuperadminMyleadModel 
-//       .findById(superAdminId )
-//       .select("name email phone whatsAppNo destination leadStatus leadSource createdAt updatedAt groupNumber noOfDays noOfPerson expectedTravelDate assignedEmployee leadInterestStatus")
-//       .sort({ createdAt: -1 })
-//       .skip(skip)
-//       .limit(limit)
-//       .lean();
-//     console.log("Fetched leads:", leads);
-
-//     const totalPages = Math.ceil(totalCount / limit);
-
-//     res.status(200).json({
-//       success: true,
-//       data: leads,
-//       pagination: {
-//         currentPage: page,
-//         totalPages,
-//         totalRecords: totalCount,
-//         limit
-//       }
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
 export const getAllSuperadminMyleads = async (req, res) => {
   try {
     const { superAdminId } = req.params;

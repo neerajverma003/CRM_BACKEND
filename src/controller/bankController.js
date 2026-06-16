@@ -25,7 +25,7 @@ export const createBank = async (req, res) => {
   }
 };
 
-// ✅ Get all banks
+//  Get all banks
 export const getBanks = async (req, res) => {
   try {
     const banks = await Bank.find().sort({ createdAt: -1 });
@@ -36,7 +36,7 @@ export const getBanks = async (req, res) => {
   }
 };
 
-// ✅ Get bank by ID
+//  Get bank by ID
 export const getBankById = async (req, res) => {
   try {
     const { id } = req.params;
