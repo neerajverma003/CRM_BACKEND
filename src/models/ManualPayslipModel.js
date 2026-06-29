@@ -20,6 +20,7 @@ const manualPayslipSchema = new mongoose.Schema(
     esiAccount: { type: String },
     location: { type: String },
     bankName: { type: String },
+    bankIfscCode: { type: String },
     accountNumber: { type: String },
     basic: { type: Number, default: 0 },
     hra: { type: Number, default: 0 },
